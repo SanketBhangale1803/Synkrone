@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/doctor-portal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Doctor Portal</span>
+            </div>
+            <nav class="nav">
+                <a href="/doctor" class="nav-link active">
+                    <i class="bi bi-calendar-week"></i>
+                    Appointments
+                </a>
+                <a href="/" class="nav-link">
+                    <i class="bi bi-house"></i>
+                    Dashboard
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1>Appointments</h1>
+                    <p>Manage your patient appointments</p>
+                </div>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchAppointments" placeholder="Search appointments...">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-icon total">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number"><%= stats.total %></div>
+                        <div class="stat-label">Total Appointments</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number"><%= stats.pending %></div>
+                        <div class="stat-label">Pending Review</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon completed">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number"><%= stats.completed %></div>
+                        <div class="stat-label">Completed Today</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cancelled">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number"><%= stats.cancelled %></div>
+                        <div class="stat-label">Cancelled/Rejected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="approved">Approved</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                    <button class="filter-btn" data-filter="rejected">Rejected</button>
+                </div>
+            </div>
+
+            <!-- Appointments List -->
+            <div class="appointments-grid">
+                <% if (appointments && appointments.length > 0) { %>
+                    <% appointments.forEach(appointment => { %>
+                        <div class="appointment-card" data-status="<%= appointment.status || 'pending' %>">
+                            <div class="appointment-header">
+                                <div class="appointment-status <%= appointment.status || 'pending' %>">
+                                    <i class="bi bi-<%= 
+                                        (!appointment.status || appointment.status === 'pending') ? 'clock' :
+                                        appointment.status === 'approved' ? 'check-circle' : 
+                                        appointment.status === 'completed' ? 'check-circle-fill' :
+                                        appointment.status === 'rejected' ? 'x-circle' :
+                                        appointment.status === 'rescheduled' ? 'arrow-clockwise' : 'clock'
+                                    %>"></i>
+                                    <%= (!appointment.status ? 'Pending' : appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)) %>
+                                </div>
+                                <div class="appointment-type <%= appointment.type %>">
+                                    <%= appointment.type.charAt(0).toUpperCase() + appointment.type.slice(1) %>
+                                </div>
+                            </div>
+
+                            <div class="patient-info">
+                                <h3><%= appointment.name %></h3>
+                                <div class="patient-contact">
+                                    <a href="tel:<%= appointment.phone %>" class="contact-link">
+                                        <i class="bi bi-telephone"></i>
+                                        <%= appointment.phone %>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="appointment-details">
+                                <div class="detail">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <%= appointment.date %>
+                                </div>
+                                <div class="detail">
+                                    <i class="bi bi-clock"></i>
+                                    <%= appointment.time %>
+                                </div>
+                            </div>
+
+                            <% if (appointment.notes) { %>
+                                <div class="appointment-notes">
+                                    <i class="bi bi-journal-text"></i>
+                                    <%= appointment.notes %>
+                                </div>
+                            <% } %>
+
+                            <div class="appointment-actions">
+                                <% if (appointment.status === 'pending') { %>
+                                    <form action="/doctor/appointments/<%= appointment._id %>/accept" method="POST" class="inline-form">
+                                        <button type="submit" class="btn-small btn-success">
+                                            <i class="bi bi-check-lg"></i>
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <form action="/doctor/appointments/<%= appointment._id %>/reject" method="POST" class="inline-form">
+                                        <input type="hidden" name="rejectionReason" value="Rejected by doctor">
+                                        <button type="submit" class="btn-small btn-danger">
+                                            <i class="bi bi-x-lg"></i>
+                                            Reject
+                                        </button>
+                                    </form>
+                                    <button class="btn-small btn-secondary" onclick="showRescheduleModal('<%= appointment._id %>')">
+                                        <i class="bi bi-calendar"></i>
+                                        Reschedule
+                                    </button>
+                                <% } else if (appointment.status === 'approved') { %>
+                                    <form action="/doctor/appointments/<%= appointment._id %>/complete" method="POST" class="inline-form">
+                                        <button type="submit" class="btn-small btn-primary">
+                                            <i class="bi bi-check-circle"></i>
+                                            Complete
+                                        </button>
+                                    </form>
+                                    <button class="btn-small btn-secondary" onclick="showRescheduleModal('<%= appointment._id %>')">
+                                        <i class="bi bi-calendar"></i>
+                                        Reschedule
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <h3>No Appointments Found</h3>
+                        <p>There are no appointments matching your criteria</p>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Simple Modals -->
+    <div id="rejectModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Reject Appointment</h3>
+            <p>Are you sure you want to reject this appointment?</p>
+            <button onclick="closeModal('rejectModal')">Cancel</button>
+            <button onclick="confirmReject()" class="btn-danger">Reject</button>
+        </div>
+    </div>
+    
+    <div id="rescheduleModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Reschedule Appointment</h3>
+            <p>Reschedule functionality coming soon!</p>
+            <button onclick="closeModal('rescheduleModal')">Close</button>
+        </div>
+    </div>
+    
+    <div id="completeModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Complete Appointment</h3>
+            <p>Mark this appointment as completed?</p>
+            <button onclick="closeModal('completeModal')">Cancel</button>
+            <button onclick="confirmComplete()" class="btn-success">Complete</button>
+        </div>
+    </div>
+
+    <style>
+        .inline-form {
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .appointment-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn-small:hover {
+            transform: translateY(-1px);
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            margin: 0 4px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: #6b7280;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .filter-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 250px;
+        }
+        
+        .search-box i {
+            color: #6b7280;
+            margin-right: 8px;
+        }
+        
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .search-box:focus-within {
+            border-color: #3b82f6;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+    </style>
+    
+    <script>
+        // Basic modal functions
+        function showRejectModal(appointmentId) {
+            document.getElementById('rejectModal').style.display = 'block';
+            window.currentAppointmentId = appointmentId;
+        }
+        
+        function showRescheduleModal(appointmentId) {
+            document.getElementById('rescheduleModal').style.display = 'block';
+            window.currentAppointmentId = appointmentId;
+        }
+        
+        function showCompleteModal(appointmentId) {
+            document.getElementById('completeModal').style.display = 'block';
+            window.currentAppointmentId = appointmentId;
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function confirmReject() {
+            // Basic reject functionality
+            alert('Appointment rejected!');
+            closeModal('rejectModal');
+        }
+        
+        function confirmComplete() {
+            // Basic complete functionality
+            alert('Appointment completed!');
+            closeModal('completeModal');
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update stats dynamically
+        async function updateStats() {
+            try {
+                const response = await fetch('/doctor/stats');
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.stats;
+                    document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = stats.total;
+                    document.querySelector('.stat-card:nth-child(2) .stat-number').textContent = stats.pending;
+                    document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = stats.completed;
+                    document.querySelector('.stat-card:nth-child(4) .stat-number').textContent = stats.cancelled;
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        // Filter appointments by status
+        function filterAppointments(status) {
+            const appointmentCards = document.querySelectorAll('.appointment-card');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            // Update active filter button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter="${status}"]`).classList.add('active');
+            
+            // Filter appointment cards
+            appointmentCards.forEach(card => {
+                const cardStatus = card.getAttribute('data-status');
+                if (status === 'all' || cardStatus === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Search appointments
+        function searchAppointments(searchTerm) {
+            const appointmentCards = document.querySelectorAll('.appointment-card');
+            const term = searchTerm.toLowerCase();
+            
+            appointmentCards.forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                const phone = card.querySelector('.contact-link').textContent.toLowerCase();
+                const date = card.querySelector('.detail').textContent.toLowerCase();
+                const time = card.querySelectorAll('.detail')[1].textContent.toLowerCase();
+                
+                if (name.includes(term) || phone.includes(term) || date.includes(term) || time.includes(term)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Show success message if redirected with success parameter
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            if (success) {
+                let message = '';
+                switch(success) {
+                    case 'accepted':
+                        message = 'Appointment accepted successfully!';
+                        break;
+                    case 'rejected':
+                        message = 'Appointment rejected successfully!';
+                        break;
+                    case 'completed':
+                        message = 'Appointment completed successfully!';
+                        break;
+                }
+                if (message) {
+                    alert(message);
+                    // Clean up URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                // Update stats after action
+                setTimeout(updateStats, 500);
+            }
+            
+            // Update stats on page load
+            updateStats();
+            
+            // Add event listeners for filter buttons
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    filterAppointments(filter);
+                });
+            });
+            
+            // Add event listener for search
+            const searchInput = document.getElementById('searchAppointments');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value;
+                    if (searchTerm.trim() === '') {
+                        // If search is empty, show all appointments
+                        const appointmentCards = document.querySelectorAll('.appointment-card');
+                        appointmentCards.forEach(card => card.style.display = 'block');
+                    } else {
+                        searchAppointments(searchTerm);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Insights - Zynk</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/ai-insights.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="insights-portal">
+        <!-- Sidebar - Matching Other Portals -->
+        <aside class="insights-sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Zynk AI</h1>
+                        <span>Smart Insights</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="patient-nav">
+                <a href="/" class="nav-item">
+                    <i class="bi bi-house"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/appointments" class="nav-item">
+                    <i class="bi bi-calendar-event"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="/insights" class="nav-item active">
+                    <i class="bi bi-lightning"></i>
+                    <span>AI Insights</span>
+                </a>
+                <a href="/doctor" class="nav-item">
+                    <i class="bi bi-heart-pulse"></i>
+                    <span>Doctor Portal</span>
+                </a>
+            </nav>
+            
+            <div class="patient-profile">
+                <div class="profile-avatar">
+                    <div class="ai-avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="profile-info">
+                    <h4>AI Assistant</h4>
+                    <span>Smart Analytics Engine</span>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span class="value">98%</span>
+                            <span class="label">Accuracy</span>
+                        </div>
+                        <div class="stat">
+                            <span class="value">24/7</span>
+                            <span class="label">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="insights-main">
+            <!-- Header -->
+            <header class="insights-header">
+                <div class="header-content">
+                    <div class="welcome-section">
+                        <h1>AI-Powered Healthcare Insights</h1>
+                        <p>Discover patterns, optimize workflows, and improve patient care with intelligent analytics</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="time-filter">
+                            <select id="timeRange" onchange="updateInsights()">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 3 months</option>
+                                <option value="365">Last year</option>
+                            </select>
+                        </div>
+                        <button class="quick-action-btn" onclick="generateReport()">
+                            <i class="bi bi-file-earmark-text"></i>
+                            Generate Report
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- AI Insights Dashboard -->
+            <div class="ai-dashboard">
+                <!-- Overview Cards -->
+                <div class="insights-overview">
+                    <div class="insight-card ai-powered">
+                        <div class="insight-header">
+                            <h3><i class="bi bi-graph-up-arrow"></i> Demand Prediction</h3>
+                            <span class="ai-badge">AI</span>
+                        </div>
+                        <div class="insight-value"><%= insights.insights.demandPrediction.nextWeekPrediction %></div>
+                        <div class="insight-trend positive">
+                            <i class="bi bi-arrow-up"></i>
+                            +<%= insights.insights.demandPrediction.trendPercentage %>% predicted growth
+                        </div>
+                        <div class="insight-description">
+                            Next week appointment forecast with <%= insights.insights.demandPrediction.confidence %>% confidence
+                        </div>
+                    </div>
+                    
+                    <div class="insight-card performance">
+                        <div class="insight-header">
+                            <h3><i class="bi bi-speedometer2"></i> Efficiency Score</h3>
+                            <span class="ai-badge">AI</span>
+                        </div>
+                        <div class="insight-value"><%= insights.insights.capacityOptimization.currentUtilization %>%</div>
+                        <div class="insight-trend positive">
+                            <i class="bi bi-check-circle"></i>
+                            <%= insights.insights.capacityOptimization.status %>
+                        </div>
+                        <div class="insight-description">
+                            Current capacity utilization performance
+                        </div>
+                    </div>
+                    
+                    <div class="insight-card prediction">
+                        <div class="insight-header">
+                            <h3><i class="bi bi-clock-history"></i> Peak Hours</h3>
+                            <span class="ai-badge">AI</span>
+                        </div>
+                        <div class="insight-value"><%= insights.insights.peakHours.peakHour %></div>
+                        <div class="insight-trend neutral">
+                            <i class="bi bi-info-circle"></i>
+                            <%= insights.insights.peakHours.peakHourPercentage %>% of daily bookings
+                        </div>
+                        <div class="insight-description">
+                            Busiest appointment time with <%= insights.insights.peakHours.peakHourBookings %> bookings
+                        </div>
+                    </div>
+                    
+                    <div class="insight-card optimization">
+                        <div class="insight-header">
+                            <h3><i class="bi bi-people"></i> Patient Retention</h3>
+                            <span class="ai-badge">AI</span>
+                        </div>
+                        <div class="insight-value"><%= insights.insights.customerBehavior.retentionRate %>%</div>
+                        <div class="insight-trend positive">
+                            <i class="bi bi-arrow-up"></i>
+                            Excellent retention
+                        </div>
+                        <div class="insight-description">
+                            <%= insights.insights.customerBehavior.uniqueCustomers %> unique patients tracked
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Grid -->
+                <div class="analytics-grid">
+                    <!-- Charts Section -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="bi bi-bar-chart"></i>
+                                <h3>Appointment Trends</h3>
+                            </div>
+                            <div class="chart-subtitle">Weekly appointment patterns and forecasting</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="appointmentTrendsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- AI Recommendations -->
+                    <div class="recommendations-section">
+                        <div class="recommendations-header">
+                            <h3><i class="bi bi-lightbulb"></i> AI Recommendations</h3>
+                        </div>
+                        <div class="recommendations-list">
+                            <% insights.recommendations.forEach(function(recommendation) { %>
+                                <div class="recommendation-item <%= recommendation.priority %>">
+                                    <div class="recommendation-header">
+                                        <div class="recommendation-title"><%= recommendation.title %></div>
+                                        <span class="priority-badge <%= recommendation.priority %>"><%= recommendation.priority %></span>
+                                    </div>
+                                    <div class="recommendation-description">
+                                        <%= recommendation.description %>
+                                    </div>
+                                    <div class="recommendation-impact">
+                                        Expected Impact: <%= recommendation.impact %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Analytics -->
+                <div class="advanced-analytics">
+                    <!-- Revenue Analytics -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3><i class="bi bi-currency-dollar"></i> Revenue Intelligence</h3>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="metric-row">
+                                <span class="metric-label">Total Appointments</span>
+                                <span class="metric-value">
+                                    <%= insights.stats.totalAppointments %>
+                                    <span class="metric-trend positive">+12%</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Completion Rate</span>
+                                <span class="metric-value">
+                                    <%= insights.stats.completionRate %>%
+                                    <span class="metric-trend positive">+5%</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Urgent Appointments</span>
+                                <span class="metric-value">
+                                    <%= insights.stats.urgentAppointments %>
+                                    <span class="metric-trend neutral">Est.</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Types -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3><i class="bi bi-pie-chart"></i> Appointment Distribution</h3>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="metric-row">
+                                <span class="metric-label">Regular Checkups</span>
+                                <span class="metric-value">
+                                    <%= Math.round((insights.stats.regularAppointments / insights.stats.totalAppointments) * 100) %>%
+                                    <span class="metric-trend positive">Stable</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Urgent Care</span>
+                                <span class="metric-value">
+                                    <%= Math.round((insights.stats.urgentAppointments / insights.stats.totalAppointments) * 100) %>%
+                                    <span class="metric-trend negative">Watch</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Follow-ups</span>
+                                <span class="metric-value">
+                                    <%= Math.round(((insights.stats.totalAppointments - insights.stats.regularAppointments - insights.stats.urgentAppointments) / insights.stats.totalAppointments) * 100) %>%
+                                    <span class="metric-trend positive">Good</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Behavior -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3><i class="bi bi-person-check"></i> Patient Behavior</h3>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="metric-row">
+                                <span class="metric-label">Unique Patients</span>
+                                <span class="metric-value">
+                                    <%= insights.insights.customerBehavior.uniqueCustomers %>
+                                    <span class="metric-trend neutral">Normal</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Show-up Rate</span>
+                                <span class="metric-value">
+                                    92%
+                                    <span class="metric-trend positive">Excellent</span>
+                                </span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Repeat Patients</span>
+                                <span class="metric-value">
+                                    78%
+                                    <span class="metric-trend positive">High</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Chat Section -->
+                <div class="ai-chat-section">
+                    <div class="ai-chat-header">
+                        <h3><i class="bi bi-chat-dots"></i> Ask AI Assistant</h3>
+                    </div>
+                    <div class="ai-chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="ai-message">
+                                <div class="message-avatar">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    <p>Hello! I'm your AI insights assistant. Ask me anything about your appointment data, trends, or recommendations for improvement.</p>
+                                    <div class="suggested-questions">
+                                        <button class="suggestion-btn" onclick="askQuestion('What are the peak booking hours?')">
+                                            What are the peak booking hours?
+                                        </button>
+                                        <button class="suggestion-btn" onclick="askQuestion('How can I improve efficiency?')">
+                                            How can I improve efficiency?
+                                        </button>
+                                        <button class="suggestion-btn" onclick="askQuestion('Show me revenue trends')">
+                                            Show me revenue trends
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="Ask about your appointment insights...">
+                            <button class="chat-send-btn" onclick="sendMessage()">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        function initializeCharts() {
+            // Appointment Trends Chart
+            const ctx = document.getElementById('appointmentTrendsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'This Week',
+                        data: [12, 15, 18, 22, 25, 8, 5],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Last Week',
+                        data: [10, 14, 16, 20, 23, 6, 3],
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateInsights() {
+            const timeRange = document.getElementById('timeRange').value;
+            // Add loading state
+            document.querySelector('.ai-dashboard').style.opacity = '0.6';
+            
+            // Simulate API call
+            setTimeout(() => {
+                document.querySelector('.ai-dashboard').style.opacity = '1';
+                console.log('Insights updated for', timeRange, 'days');
+            }, 1000);
+        }
+
+        function generateReport() {
+            // Add loading state
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('Report generated successfully! Check your downloads.');
+            }, 2000);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                addAIMessage(generateAIResponse(message));
+            }, 1000);
+        }
+
+        function askQuestion(question) {
+            addUserMessage(question);
+            setTimeout(() => {
+                addAIMessage(generateAIResponse(question));
+            }, 1000);
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'user-message';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <p>${message}</p>
+                </div>
+                <div class="message-avatar">
+                    <i class="bi bi-person"></i>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addAIMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'ai-message';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="message-content">
+                    <p>${message}</p>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateAIResponse(question) {
+            const responses = {
+                'What are the peak booking hours?': 'Based on your data, peak booking hours are between 2:00-4:00 PM, accounting for 15% of daily appointments. Consider adding more slots during this time.',
+                'How can I improve efficiency?': 'I recommend: 1) Optimize scheduling during peak hours, 2) Implement automated reminders to reduce no-shows, 3) Consider telemedicine for routine follow-ups.',
+                'Show me revenue trends': 'Your revenue has grown 12% this month. Average per appointment is $150. Monthly projection is trending positive at $18,000.'
+            };
+            
+            return responses[question] || 'I understand your question about appointment insights. Based on current data patterns, I can help you optimize scheduling, improve patient flow, and increase efficiency. What specific area would you like me to analyze further?';
+        }
+
+        // Handle Enter key in chat input
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Appointment Confirmed - Zynk</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        animation: fadeIn 1s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .app-container {
+        display: flex;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0;
+      }
+      .sidebar {
+        width: 250px;
+        background-color: #fff;
+        padding: 20px;
+        border-right: 1px solid #e1e1e1;
+        position: relative;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .logo i {
+        font-size: 28px;
+        color: #007bff;
+        margin-right: 10px;
+      }
+      .logo h1 {
+        font-size: 24px;
+        color: #333;
+        margin: 0;
+      }
+      .subtitle {
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 20px;
+      }
+      nav a {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        color: #333;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+      nav a:hover {
+        background-color: #f1f1f1;
+      }
+      nav a i {
+        margin-right: 10px;
+      }
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+      .confirmation-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .success-icon {
+        font-size: 50px;
+        color: #28a745;
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+      .confirmation-message {
+        margin: 20px 0;
+        font-size: 18px;
+        color: #555;
+      }
+      .appointment-details {
+        text-align: left;
+        margin: 20px 0;
+      }
+      .detail-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .detail-item i {
+        font-size: 18px;
+        color: #007bff;
+        margin-right: 10px;
+      }
+      .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      .btn-primary, .btn-secondary {
+        display: inline-block;
+        padding: 10px 20px;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+      .btn-primary {
+        background-color: #007bff;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+      }
+      .btn-secondary:hover {
+        background-color: #5a6268;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="logo">
+          <i class="bi bi-calendar-check"></i>
+          <h1>Zynk</h1>
+        </div>
+        <p class="subtitle">Smart Appointment Scheduling</p>
+        <nav>
+          <a href="/"><i class="bi bi-house"></i> Dashboard</a>
+          <a href="/appointments"><i class="bi bi-calendar-event"></i> Appointments</a>
+          <a href="/insights"><i class="bi bi-lightning"></i> AI Insights</a>
+          <a href="/settings"><i class="bi bi-gear"></i> Settings</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <div class="confirmation-container">
+          <div class="success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <h1>Appointment Confirmed!</h1>
+          <p class="confirmation-message">Your appointment has been successfully scheduled.</p>
+          
+          <div class="appointment-details">
+            <h3>Appointment Details</h3>
+            <div class="detail-item">
+              <i class="bi bi-person-fill"></i>
+              <span>Name: <%= appointmentData.name %></span>
+            </div>
+            <div class="detail-item">
+              <i class="bi bi-telephone-fill"></i>
+              <span>Phone: <%= appointmentData.phone %></span>
+            </div>
+            <div class="detail-item">
+              <i class="bi bi-calendar-date"></i>
+              <span>Date: <%= appointmentData.date %></span>
+            </div>
+            <div class="detail-item">
+              <i class="bi bi-clock"></i>
+              <span>Time: <%= appointmentData.time %></span>
+            </div>
+            <div class="detail-item">
+              <i class="bi bi-bookmark-fill"></i>
+              <span>Type: <%= appointmentData.type.charAt(0).toUpperCase() + appointmentData.type.slice(1) %></span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <a href="/" class="btn-primary">
+              <i class="bi bi-house"></i>
+              Back to Dashboard
+            </a>
+            <a href="/appointments" class="btn-secondary">
+              <i class="bi bi-calendar-event"></i>
+              View All Appointments
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

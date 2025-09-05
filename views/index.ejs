@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/ai-chat.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+  </head>
+  <body>
+    <div class="patient-portal">
+      <!-- Enhanced Sidebar - Matching Doctor Portal -->
+      <aside class="patient-sidebar">
+        <div class="sidebar-header">
+          <div class="logo-container">
+            <div class="logo-icon">
+              <i class="bi bi-calendar-check-fill"></i>
+            </div>
+            <div class="logo-text">
+              <h1>Zynk</h1>
+              <span>Patient Portal</span>
+            </div>
+          </div>
+        </div>
+        
+        <nav class="patient-nav">
+          <a href="/" class="nav-item active">
+            <i class="bi bi-house"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/appointments" class="nav-item">
+            <i class="bi bi-calendar-event"></i>
+            <span>My Appointments</span>
+          </a>
+          <a href="/insights" class="nav-item">
+            <i class="bi bi-lightning"></i>
+            <span>AI Insights</span>
+          </a>
+          <a href="/doctor" class="nav-item">
+            <i class="bi bi-heart-pulse"></i>
+            <span>Doctor Portal</span>
+          </a>
+        </nav>
+        
+        <div class="patient-profile">
+          <div class="profile-avatar">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt="Patient">
+            <div class="status-indicator online"></div>
+          </div>
+          <div class="profile-info">
+            <h4>Welcome Back</h4>
+            <span>Patient Dashboard</span>
+            <div class="profile-stats">
+              <div class="stat">
+                <span class="value"><%= stats.totalAppointments %></span>
+                <span class="label">Total Visits</span>
+              </div>
+              <div class="stat">
+                <span class="value"><%= stats.todayAppointments %></span>
+                <span class="label">Today</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="patient-main">
+        <!-- Top Header -->
+        <header class="patient-header">
+          <div class="header-content">
+            <div class="welcome-section">
+              <h1>Good Day! Ready for your next appointment?</h1>
+              <p>You have <span class="highlight"><%= stats.todayAppointments %> appointments today</span> and <span class="highlight"><%= stats.totalAppointments %> total bookings</span></p>
+            </div>
+            <div class="header-actions">
+              <div class="search-container">
+                <div class="search-bar">
+                  <i class="bi bi-search"></i>
+                  <input type="text" placeholder="Search appointments...">
+                </div>
+              </div>
+              <button class="quick-action-btn" onclick="scrollToBooking()">
+                <i class="bi bi-plus-circle"></i>
+                Quick Book
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">
+              <i class="bi bi-calendar-today"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number"><%= stats.todayAppointments %></div>
+              <div class="stat-label">Today's Appointments</div>
+              <div class="stat-change neutral">Next at 2:30 PM</div>
+            </div>
+          </div>
+          
+          <div class="stat-card success">
+            <div class="stat-icon">
+              <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number"><%= stats.totalAppointments %></div>
+              <div class="stat-label">Total Appointments</div>
+              <div class="stat-change positive">+2 this month</div>
+            </div>
+          </div>
+          
+          <div class="stat-card warning">
+            <div class="stat-icon">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number"><%= stats.urgentAppointments %></div>
+              <div class="stat-label">Urgent Cases</div>
+              <div class="stat-change neutral">Immediate attention</div>
+            </div>
+          </div>
+          
+          <div class="stat-card info">
+            <div class="stat-icon">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number"><%= stats.regularAppointments %></div>
+              <div class="stat-label">Regular Checkups</div>
+              <div class="stat-change positive">Stay healthy!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="main-content-grid">
+          <!-- Booking Section -->
+          <div class="booking-section" id="bookingSection">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="bi bi-calendar-plus"></i>
+                <h3>Schedule New Appointment</h3>
+                <span class="availability-badge">Available slots today</span>
+              </div>
+              <div class="section-actions">
+                <button class="filter-btn active" data-type="regular">Regular</button>
+                <button class="filter-btn" data-type="urgent">Urgent</button>
+                <button class="filter-btn" data-type="follow">Follow-up</button>
+              </div>
+            </div>
+            
+            <form action="/" method="POST" class="appointment-form">
+              <div class="form-container">
+                <div class="form-section patient-details">
+                  <h4><i class="bi bi-person"></i> Patient Information</h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="name">Full Name</label>
+                      <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="phone">Phone Number</label>
+                      <input type="tel" id="phone" name="phone" placeholder="Your contact number" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section appointment-details">
+                  <h4><i class="bi bi-calendar-event"></i> Appointment Details</h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="date">Preferred Date</label>
+                      <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="time">Preferred Time</label>
+                      <input type="time" id="time" name="time" required>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="type">Appointment Type</label>
+                    <select id="type" name="type" required>
+                      <option value="">Select appointment type</option>
+                      <option value="regular">Regular Checkup</option>
+                      <option value="urgent">Urgent Care</option>
+                      <option value="follow">Follow-up Visit</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn-secondary" onclick="clearForm()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Clear Form
+                  </button>
+                  <button type="submit" class="btn-primary">
+                    <i class="bi bi-calendar-plus"></i>
+                    Schedule Appointment
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Quick Actions & Info -->
+          <div class="quick-actions-section">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="bi bi-lightning"></i>
+                <h3>Quick Actions</h3>
+              </div>
+            </div>
+            
+            <div class="action-cards">
+              <a href="/appointments" class="action-card primary">
+                <div class="action-icon">
+                  <i class="bi bi-calendar-event"></i>
+                </div>
+                <div class="action-content">
+                  <h4>My Appointments</h4>
+                  <p>View and manage your bookings</p>
+                  <span class="action-count"><%= stats.totalAppointments %> total</span>
+                </div>
+                <div class="action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </a>
+              
+              <a href="/doctor" class="action-card doctor">
+                <div class="action-icon">
+                  <i class="bi bi-heart-pulse"></i>
+                </div>
+                <div class="action-content">
+                  <h4>Doctor Portal</h4>
+                  <p>Access medical dashboard</p>
+                  <span class="action-count">Professional view</span>
+                </div>
+                <div class="action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </a>
+
+              <a href="/insights" class="action-card insights">
+                <div class="action-icon">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="action-content">
+                  <h4>Health Insights</h4>
+                  <p>AI-powered analytics</p>
+                  <span class="action-count">Smart recommendations</span>
+                </div>
+                <div class="action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </a>
+            </div>
+
+            <!-- Health Tips Section -->
+            <div class="health-tips">
+              <div class="tips-header">
+                <h4><i class="bi bi-lightbulb"></i> Health Tips</h4>
+                <button class="refresh-tips" onclick="refreshTips()">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+              <div class="tips-content">
+                <div class="tip-item">
+                  <div class="tip-icon">💧</div>
+                  <div class="tip-text">
+                    <strong>Stay Hydrated</strong>
+                    <p>Drink at least 8 glasses of water daily</p>
+                  </div>
+                </div>
+                <div class="tip-item">
+                  <div class="tip-icon">🚶</div>
+                  <div class="tip-text">
+                    <strong>Daily Exercise</strong>
+                    <p>30 minutes of walking improves heart health</p>
+                  </div>
+                </div>
+                <div class="tip-item">
+                  <div class="tip-icon">😴</div>
+                  <div class="tip-text">
+                    <strong>Quality Sleep</strong>
+                    <p>7-9 hours of sleep boosts immunity</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Timeline -->
+        <div class="activity-section">
+          <div class="section-header">
+            <div class="section-title">
+              <i class="bi bi-clock-history"></i>
+              <h3>Recent Activity</h3>
+              <span class="period-badge">Last 7 days</span>
+            </div>
+          </div>
+          
+          <div class="activity-timeline">
+            <div class="timeline-item completed">
+              <div class="timeline-marker">
+                <div class="marker-dot"></div>
+                <div class="marker-line"></div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-time">2 days ago</div>
+                <div class="timeline-details">
+                  <h5>Checkup Completed</h5>
+                  <p>Regular health examination with Dr. Smith</p>
+                </div>
+                <div class="timeline-status">
+                  <span class="status-badge completed">Completed</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="timeline-item scheduled">
+              <div class="timeline-marker">
+                <div class="marker-dot"></div>
+                <div class="marker-line"></div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-time">5 days ago</div>
+                <div class="timeline-details">
+                  <h5>Appointment Scheduled</h5>
+                  <p>Follow-up appointment booked for next week</p>
+                </div>
+                <div class="timeline-status">
+                  <span class="status-badge scheduled">Scheduled</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="timeline-item reminder">
+              <div class="timeline-marker">
+                <div class="marker-dot"></div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-time">1 week ago</div>
+                <div class="timeline-details">
+                  <h5>Reminder Sent</h5>
+                  <p>Annual checkup reminder notification</p>
+                </div>
+                <div class="timeline-status">
+                  <span class="status-badge reminder">Reminder</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Set minimum date to today
+      document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').min = today;
+        
+        // Auto-focus on form when page loads
+        setTimeout(() => {
+          document.getElementById('name').focus();
+        }, 500);
+      });
+
+      function scrollToBooking() {
+        document.getElementById('bookingSection').scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+        setTimeout(() => {
+          document.getElementById('name').focus();
+        }, 800);
+      }
+
+      function clearForm() {
+        document.querySelector('.appointment-form').reset();
+        document.getElementById('name').focus();
+      }
+
+      function refreshTips() {
+        const button = document.querySelector('.refresh-tips');
+        button.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+          button.style.transform = 'rotate(0deg)';
+        }, 500);
+      }
+
+      // Filter buttons functionality
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const type = this.dataset.type;
+          if (type) {
+            document.getElementById('type').value = type;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
