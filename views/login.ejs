@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Portal - Zynk</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/appointments.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+  <style>
+    body {
+        font-family: 'Inter', sans-serif;
+      background-color: #f5f7fa;
+      display: flex; justify-content: center;
+      align-items: center; height: 100vh; margin: 0;
+    }
+    .auth-container {
+      background: #fff;
+      padding: 2rem; border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.08); width: 400px;
+    }
+    .logo {
+      text-align: center; margin-bottom: 1rem;
+      font-size: 1.5rem; color: #007bff;
+    }
+    .auth-header {
+      text-align: center; margin-bottom: 1rem;
+    }
+    .auth-tabs {
+      display: flex; margin-bottom: 1.5rem;
+      border-radius: 6px; overflow: hidden;
+    }
+    .auth-tabs button {
+      flex: 1;
+      padding: 0.8rem; border: none;
+      background: #f5f5f5; cursor: pointer;
+      font-weight: 600; transition: all 0.3s ease;
+    }
+    .auth-tabs .active {
+      background: #007bff; color: #fff; }
+    .auth-form {
+      display: none; text-align: left;}
+    .auth-form.active {
+      display: block; }
+    .form-group { margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block; margin-bottom: 0.4rem; font-weight: 500;}
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;}
+    .btn-auth {
+      width: 100%;
+      padding: 0.8rem;
+      background: #007bff;
+      color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: background 0.2s ease;}
+    .btn-auth:hover {
+      background: #0066d1;}
+    .auth-error {
+      color: #d9534f; margin-bottom: 1rem; text-align: center; }
+    .switch-link {
+      margin-top: 1rem; font-size: 0.9rem; text-align: center;}
+    .switch-link a {
+      color: #007bff; text-decoration: none;}
+  </style>
+</head>
+<body>
+    <main class="auth-main">
+    <div>
+      <div class="auth-container">
+       
+        <div class="auth-header">
+            <a href="/login">
+            <img src= "synk.png" alt="Zynk Logo" class="logo">
+            </a>
+            <h1>Welcome to Zynk</h1>
+            <p>Please login or sign up to continue</p>
+        </div>
+        <div class="auth-tabs">
+          <button id="loginTab" class="active" onclick="showTab('login')">Login</button>
+          <button id="signupTab" onclick="showTab('signup')">Sign Up</button>
+        </div>
+        <% if (error) { %>
+          <div class="auth-error" role = "alert"><%= error %></div>
+        <% } %>
+        <form id="loginForm" class="auth-form active" method="POST" action="/login">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" name="email" id="loginEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" name="password" id="loginPassword" required>
+          </div>
+          <button type="submit" class="btn-auth">Login</button>
+        </form>
+        <form id="signupForm" class="auth-form" method="POST" action="/signup">
+          <div class="form-group">
+            <label for="signupEmail">Email</label>
+            <input type="email" name="email" id="signupEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" name="password" id="signupPassword" required>
+          </div>
+          <button type="submit" class="btn-auth">Sign Up</button>
+        </form>
+        <div class="switch-link">
+          <span id="switchMessage">Don't have an account? <a href="#" onclick="showTab('signup')">Create an account today</a></span>
+        </div>
+      </div>
+      <div class="ai-chat-section">
+        <div class="ai-chat-header">
+          <h3><i class="bi bi-chat-dots"></i> Ask AI Assistant</h3>
+        </div>
+        <div class="ai-chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="ai-message">
+              <div class="message-avatar">
+                <i class="bi bi-robot"></i>
+              </div>
+              <div class="message-content">
+                <p>Hello! I'm your AI insights assistant. Ask me anything about your account, login help, or Zynk features.</p>
+                <div class="suggested-questions">
+                  <button class="suggestion-btn" onclick="askQuestion('How do I reset my password?')">
+                    How do I reset my password?
+                  </button>
+                  <button class="suggestion-btn" onclick="askQuestion('What features does Zynk offer?')">
+                    What features does Zynk offer?
+                  </button>
+                  <button class="suggestion-btn" onclick="askQuestion('Who can I contact for support?')">
+                    Who can I contact for support?
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask about your account or Zynk...">
+            <button class="chat-send-btn" onclick="sendMessage()">
+              <i class="bi bi-send"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+
+  <script>
+    function showTab(tab) {
+      document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+      document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+      document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+      document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
+      document.getElementById('switchMessage').innerHTML = 
+      tab === 'login' ? 'Don\'t have an account? <a href="#" onclick="showTab(\'signup\')">Create an account today</a>'
+      : 'Already have an account? <a href="#" onclick="showTab(\'login\')">Login here</a>';
+    }
+    // chat input functionality ** for QA **
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+      addUserMessage(message);
+      input.value = '';
+      setTimeout(() => {
+        addAIMessage(generateAIResponse(message));
+      }, 800);
+    }
+
+    function askQuestion(question) {
+      addUserMessage(question);
+      setTimeout(() => {
+        addAIMessage(generateAIResponse(question));
+      }, 800);
+    }
+
+    function addUserMessage(message) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'user-message';
+      messageDiv.innerHTML = `
+        <div class="message-content">
+          <p>${message}</p>
+        </div>
+        <div class="message-avatar">
+          <i class="bi bi-person"></i>
+        </div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addAIMessage(message) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'ai-message';
+      messageDiv.innerHTML = `
+        <div class="message-avatar">
+          <i class="bi bi-robot"></i>
+        </div>
+        <div class="message-content">
+          <p>${message}</p>
+        </div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function generateAIResponse(question) {
+      const responses = {
+        'How do I reset my password?': 'To reset your password, click on "Forgot password" on the login page or contact support for assistance.',
+        'What features does Zynk offer?': 'Zynk offers appointment scheduling, AI-powered insights, patient management, and more to streamline your healthcare workflow.',
+        'Who can I contact for support?': 'You can reach our support team at support@zynk.com or use the in-app chat for quick help.'
+      };
+      return responses[question] || 'I\'m here to help with your account or Zynk features. Please ask your question!';
+    }
+
+    // Handle Enter key in chat input
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>

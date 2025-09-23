@@ -54,6 +54,82 @@ function generateRecentActivity(appointments) {
   });
 }
 
+
+/* GET the login page. */
+
+router.get('/login', (req, res) => res.render('login', {title: 'Login'}));
+router.get('/signup', (req, res) => res.render('signup', {title: 'Sign up'}));
+
+/encryption method/
+const express = require('express');
+const bcrypt = require('bcrypt');
+const session = require('express-session');
+const app = express();
+
+app.use(express.urlencoded({ extended: true }));
+app.use(session({ secret: 'yourSecret', resave: false, saveUninitialized: false }));
+
+//*in-memory user store
+const users = [];
+
+//*authentication landing page
+app.get('/auth', (req, res) => {
+  res.render('auth', { error: null });
+});
+
+//*login POST
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    return res.render('auth', { error: 'Invalid email or password. Try again' });
+  }
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return res.render('auth', { error: 'Invalid email or password.Try again' });
+  }
+  req.session.user = user;
+  res.redirect('/');
+});
+
+//*signup 
+app.post('/signup', async (req, res) => {
+  const { email, password } = req.body;
+  if (users.find(u => u.email === email)) {
+    return res.render('auth', { error: 'Email is already registered.' });
+  }
+  const hash = await bcrypt.hash(password, 10);
+  users.push({ email, password: hash });
+  res.redirect('/auth');
+});
+
+//*protect the main page
+app.get('/', (req, res, next) => {
+  if (!req.session.user) return res.redirect('/auth');
+  next();
+}, (req, res) => {
+  (req, res) => {
+    res.render('appointement', {
+      title: 'Zynk - Smart Dashboard',
+      stats: {}, 
+      appointments: [] 
+    });
+  }
+});
+
+// *authentication logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.redirect('/');
+    }
+    res.clearCookie('connect.sid'); // Optional: clears session cookie
+    res.redirect('/login');
+  });
+});
+
+
 /* GET home page. */
 router.get('/', async function(req, res, next) {
   try {
