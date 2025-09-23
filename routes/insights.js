@@ -225,4 +225,9 @@ router.post('/generate-report', async function(req, res, next) {
   }
 });
 
-module.exports = router; 
+// Export the helper functions
+module.exports = {
+  router,
+  generateInsights,
+  getDefaultInsights
+};

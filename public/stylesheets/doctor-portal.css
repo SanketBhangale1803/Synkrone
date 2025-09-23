@@ -73,6 +73,12 @@ body {
   margin-bottom: 2rem;
 }
 
+.logo-image {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .nav {
   display: flex;
   flex-direction: column;

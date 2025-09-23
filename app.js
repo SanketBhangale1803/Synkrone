@@ -1,73 +1,79 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var session = require('express-session');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const session = require('express-session');
 const MongoStore = require('connect-mongo');
-
-// Import database connection
+const flash = require('connect-flash');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const User = require('./models/users');
 const { connectDB } = require('./models');
 
-var indexRouter = require('./routes/index');
-var appointmentsRouter = require('./routes/appointments');
-var doctorRouter = require('./routes/doctor');
-var insightsRouter = require('./routes/insights');
-var app = express();
+const indexRouter = require('./routes/index');
+const appointmentsRouter = require('./routes/appointments');
+const doctorRouter = require('./routes/doctor');
+const { router: insightsRouter } = require('./routes/insights');
+const authApiRouter = require('./routes/users');
+const doctorsApiRouter = require('./routes/doctors');
+const hospitalsApiRouter = require('./routes/hospitals');
 
-// Connect to database
+const app = express();
+
 connectDB();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-// Session configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ 
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/zynk_appointments',
-        ttl: 24 * 60 * 60 // Session TTL (1 day)
-    }),
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // Cookie expiry (1 day)
-    }
-}));
 
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 
-// Make user available in all views
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'sanket',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/zynk_appointments',
+    ttl: 24 * 60 * 60
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+
+app.use(flash());
+
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 app.use((req, res, next) => {
-    res.locals.user = req.session.user;
-    next();
+  res.locals.user = req.user;
+  next();
 });
 
-// Routes
-app.use('/', indexRouter);
 app.use('/appointments', appointmentsRouter);
+app.use('/', indexRouter);
 app.use('/doctor', doctorRouter);
 app.use('/insights', insightsRouter);
+app.use('/api/auth', authApiRouter);
+app.use('/api/doctors', doctorsApiRouter);
+app.use('/api/hospitals', hospitalsApiRouter);
 
-// catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
-// error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
   res.render('error');
 });

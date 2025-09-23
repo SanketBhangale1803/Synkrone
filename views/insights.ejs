@@ -5,66 +5,28 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="/stylesheets/style.css">
     <link rel="stylesheet" href="/stylesheets/ai-insights.css">
+    <link rel="stylesheet" href="/stylesheets/doctor-portal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="insights-portal">
-        <!-- Sidebar - Matching Other Portals -->
-        <aside class="insights-sidebar">
-            <div class="sidebar-header">
-                <div class="logo-container">
-                    <div class="logo-icon">
-                        <i class="bi bi-lightning-charge-fill"></i>
-                    </div>
-                    <div class="logo-text">
-                        <h1>Zynk AI</h1>
-                        <span>Smart Insights</span>
-                    </div>
-                </div>
+    <div class="app-container">
+        <!-- Sidebar - Matching Doctor Portal -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Doctor Portal</span>
             </div>
-            
-            <nav class="patient-nav">
-                <a href="/" class="nav-item">
-                    <i class="bi bi-house"></i>
-                    <span>Dashboard</span>
+            <nav class="nav">
+                <a href="/doctor" class="nav-link">
+                    <i class="bi bi-calendar-week"></i>
+                    Appointments
                 </a>
-                <a href="/appointments" class="nav-item">
-                    <i class="bi bi-calendar-event"></i>
-                    <span>Appointments</span>
-                </a>
-                <a href="/insights" class="nav-item active">
-                    <i class="bi bi-lightning"></i>
-                    <span>AI Insights</span>
-                </a>
-                <a href="/doctor" class="nav-item">
-                    <i class="bi bi-heart-pulse"></i>
-                    <span>Doctor Portal</span>
+                <a href="/insights" class="nav-link active">
+                    <i class="bi bi-graph-up"></i>
+                    AI Insights
                 </a>
             </nav>
-            
-            <div class="patient-profile">
-                <div class="profile-avatar">
-                    <div class="ai-avatar">
-                        <i class="bi bi-robot"></i>
-                    </div>
-                    <div class="status-indicator online"></div>
-                </div>
-                <div class="profile-info">
-                    <h4>AI Assistant</h4>
-                    <span>Smart Analytics Engine</span>
-                    <div class="profile-stats">
-                        <div class="stat">
-                            <span class="value">98%</span>
-                            <span class="label">Accuracy</span>
-                        </div>
-                        <div class="stat">
-                            <span class="value">24/7</span>
-                            <span class="label">Active</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Content -->
@@ -138,7 +100,7 @@
                             <%= insights.insights.peakHours.peakHourPercentage %>% of daily bookings
                         </div>
                         <div class="insight-description">
-                            Busiest appointment time with <%= insights.insights.peakHours.peakHourBookings %> bookings
+                            Busiest appointment time with <%= insights.insights.peakHourBookings %> bookings
                         </div>
                     </div>
                     

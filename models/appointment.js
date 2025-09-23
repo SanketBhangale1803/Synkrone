@@ -1,10 +1,23 @@
 const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema({
-  patient: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: false
+    required: true,
+    index: true
+  },
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  hospitalId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hospital',
+    required: true,
+    index: true
   },
   name: { 
     type: String, 
@@ -62,7 +75,7 @@ const appointmentSchema = new mongoose.Schema({
 });
 
 // Add indexes for better query performance
-appointmentSchema.index({ patient: 1, date: 1 });
+appointmentSchema.index({ userId: 1, date: 1 });
 appointmentSchema.index({ status: 1 });
 appointmentSchema.index({ date: 1, status: 1 });
 

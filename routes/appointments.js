@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const { Appointment } = require('../models');
+const auth = require('../middleware/auth');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -21,12 +22,19 @@ async function calculateAppointmentStats() {
 }
 
 /* GET appointments page. */
-router.get('/', async function(req, res, next) {
+router.get('/', auth.verifyToken, async function(req, res, next) {
   try {
     const { status, search, sort } = req.query;
     
     // Build query
     let query = {};
+
+    // Ownership filtering
+    if (req.user.role === 'user') {
+      query.userId = req.user._id;
+    } else if (req.user.role === 'doctor') {
+      query.doctorId = req.user._id; // assuming doctor users share _id with User
+    }
     
     // Filter by status
     if (status && status !== 'all') {
@@ -72,12 +80,12 @@ router.get('/', async function(req, res, next) {
 });
 
 /* POST to create a new appointment. */
-router.post('/', async function(req, res, next) {
+router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req, res, next) {
   try {
-    const { name, phone, date, time, type, notes } = req.body;
+    const { name, phone, date, time, type, notes, doctorId, hospitalId } = req.body;
     
     // Validation
-    if (!name || !phone || !date || !time || !type) {
+    if (!name || !phone || !date || !time || !type || !doctorId || !hospitalId) {
       req.session.flash = { type: 'error', message: 'All required fields must be filled' };
       return res.redirect('/appointments');
     }
@@ -95,6 +103,9 @@ router.post('/', async function(req, res, next) {
     }
     
     const newAppointment = new Appointment({
+      userId: req.user._id,
+      doctorId,
+      hospitalId,
       name,
       phone,
       date,
@@ -103,10 +114,10 @@ router.post('/', async function(req, res, next) {
       notes: notes || ''
     });
     
-    await newAppointment.save();
-    
-    req.session.flash = { type: 'success', message: 'Appointment created successfully!' };
-    res.redirect('/appointments');
+    const saved = await newAppointment.save();
+    // Save for confirmation page
+    req.session.lastAppointment = saved;
+    return req.session.save(() => res.redirect('/confirmation'));
   } catch (error) {
     console.error('Error creating appointment:', error);
     req.session.flash = { type: 'error', message: 'Error creating appointment' };
@@ -115,7 +126,8 @@ router.post('/', async function(req, res, next) {
 });
 
 /* PUT update appointment status */
-router.put('/:id/status', async function(req, res, next) {
+// Only doctors can update status
+router.put('/:id/status', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { id } = req.params;
     const { status, doctorNotes } = req.body;
@@ -128,8 +140,13 @@ router.put('/:id/status', async function(req, res, next) {
       updateData.resolvedAt = new Date();
     }
     
-    const updatedAppointment = await Appointment.findByIdAndUpdate(
-      id,
+    // Ownership/role check
+    const ownershipFilter = req.user.role === 'user' ? { _id: id, userId: req.user._id } :
+                            req.user.role === 'doctor' ? { _id: id, doctorId: req.user._id } :
+                            { _id: id };
+
+    const updatedAppointment = await Appointment.findOneAndUpdate(
+      ownershipFilter,
       updateData,
       { new: true, runValidators: true }
     );
@@ -150,7 +167,7 @@ router.put('/:id/status', async function(req, res, next) {
 });
 
 /* PUT update appointment details */
-router.put('/:id', async function(req, res, next) {
+router.put('/:id', auth.verifyToken, async function(req, res, next) {
   try {
     const { id } = req.params;
     const { name, phone, date, time, type, notes } = req.body;
@@ -158,8 +175,12 @@ router.put('/:id', async function(req, res, next) {
     const updateData = { name, phone, date, time, type };
     if (notes !== undefined) updateData.notes = notes;
     
-    const updatedAppointment = await Appointment.findByIdAndUpdate(
-      id,
+    const ownershipFilter = req.user.role === 'user' ? { _id: id, userId: req.user._id } :
+                            req.user.role === 'doctor' ? { _id: id, doctorId: req.user._id } :
+                            { _id: id };
+
+    const updatedAppointment = await Appointment.findOneAndUpdate(
+      ownershipFilter,
       updateData,
       { new: true, runValidators: true }
     );
@@ -180,11 +201,15 @@ router.put('/:id', async function(req, res, next) {
 });
 
 /* DELETE appointment */
-router.delete('/:id', async function(req, res, next) {
+// Patients can cancel their own; doctors/admin can cancel theirs/any
+router.delete('/:id', auth.verifyToken, async function(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const deletedAppointment = await Appointment.findByIdAndDelete(id);
+    const ownershipFilter = req.user.role === 'user' ? { _id: id, userId: req.user._id } :
+                            req.user.role === 'doctor' ? { _id: id, doctorId: req.user._id } :
+                            { _id: id };
+
+    const deletedAppointment = await Appointment.findOneAndDelete(ownershipFilter);
     
     if (deletedAppointment) {
       res.json({ 
@@ -201,11 +226,14 @@ router.delete('/:id', async function(req, res, next) {
 });
 
 /* GET appointment details */
-router.get('/:id', async function(req, res, next) {
+router.get('/:id', auth.verifyToken, async function(req, res, next) {
   try {
     const { id } = req.params;
-    
-    const appointment = await Appointment.findById(id);
+    const ownershipFilter = req.user.role === 'user' ? { _id: id, userId: req.user._id } :
+                            req.user.role === 'doctor' ? { _id: id, doctorId: req.user._id } :
+                            { _id: id };
+
+    const appointment = await Appointment.findOne(ownershipFilter);
     
     if (appointment) {
       res.json({ success: true, appointment });

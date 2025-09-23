@@ -1,4 +1,4 @@
-# Zynk - Smart Appointment Scheduler
+# Synkrone - Smart Appointment Scheduler
 
 A comprehensive appointment management system built with Node.js, Express, and MongoDB, featuring separate portals for patients and doctors with AI-powered insights.
 

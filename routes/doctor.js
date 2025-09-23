@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
+const auth = require('../middleware/auth');
 const { Appointment } = require('../models');
+const { generateInsights, getDefaultInsights } = require('./insights');
 
 // Helper function to calculate doctor stats
 async function calculateDoctorStats() {
@@ -69,7 +71,7 @@ async function calculateDoctorStats() {
 }
 
 /* GET doctor dashboard */
-router.get('/', async function(req, res, next) {
+router.get('/', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const today = new Date().toISOString().split('T')[0];
     
@@ -109,7 +111,7 @@ router.get('/', async function(req, res, next) {
 });
 
 /* POST update appointment status */
-router.post('/update-status', async function(req, res, next) {
+router.post('/update-status', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { appointmentId, status, doctorNotes } = req.body;
     
@@ -150,7 +152,7 @@ router.post('/update-status', async function(req, res, next) {
 });
 
 /* GET appointment details for doctor */
-router.get('/appointment/:id', async function(req, res, next) {
+router.get('/appointment/:id', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const appointment = await Appointment.findById(req.params.id);
     
@@ -166,7 +168,7 @@ router.get('/appointment/:id', async function(req, res, next) {
 });
 
 /* GET doctor analytics */
-router.get('/analytics', async function(req, res, next) {
+router.get('/analytics', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { period = '30' } = req.query;
     const days = parseInt(period);
@@ -228,8 +230,30 @@ router.get('/analytics', async function(req, res, next) {
   }
 });
 
+// Simple AI Insights page for doctors (reuse insights view if present)
+router.get('/insights', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const insights = await generateInsights(days);
+    
+    res.render('insights', { 
+      title: 'Doctor AI Insights',
+      insights,
+      timeRange: days
+    });
+  } catch (error) {
+    console.error('Error loading insights:', error);
+    const defaultInsights = getDefaultInsights();
+    res.render('insights', { 
+      title: 'Doctor AI Insights',
+      insights: defaultInsights,
+      timeRange: 30
+    });
+  }
+});
+
 /* POST add doctor notes */
-router.post('/appointment/:id/notes', async function(req, res, next) {
+router.post('/appointment/:id/notes', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { appointmentId } = req.params;
     const { doctorNotes } = req.body;
@@ -260,7 +284,7 @@ router.post('/appointment/:id/notes', async function(req, res, next) {
 });
 
 /* GET today's schedule */
-router.get('/schedule/today', async function(req, res, next) {
+router.get('/schedule/today', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const today = new Date().toISOString().split('T')[0];
     
@@ -279,7 +303,7 @@ router.get('/schedule/today', async function(req, res, next) {
 });
 
 /* GET upcoming appointments */
-router.get('/schedule/upcoming', async function(req, res, next) {
+router.get('/schedule/upcoming', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const today = new Date().toISOString().split('T')[0];
     
@@ -301,7 +325,7 @@ router.get('/schedule/upcoming', async function(req, res, next) {
 });
 
 /* POST accept appointment */
-router.post('/appointments/:id/accept', async function(req, res, next) {
+router.post('/appointments/:id/accept', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { id } = req.params;
     
@@ -326,7 +350,7 @@ router.post('/appointments/:id/accept', async function(req, res, next) {
 });
 
 /* POST reject appointment */
-router.post('/appointments/:id/reject', async function(req, res, next) {
+router.post('/appointments/:id/reject', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { id } = req.params;
     const { rejectionReason } = req.body;
@@ -353,7 +377,7 @@ router.post('/appointments/:id/reject', async function(req, res, next) {
 });
 
 /* POST complete appointment */
-router.post('/appointments/:id/complete', async function(req, res, next) {
+router.post('/appointments/:id/complete', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
   try {
     const { id } = req.params;
     const { doctorNotes } = req.body;

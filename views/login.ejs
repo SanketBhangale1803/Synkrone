@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Synkrone</title>
+  <link rel="stylesheet" href="/stylesheets/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <img src="/images/logo.png" alt="logo" class="logo" />
+      <h1>Login to Synkrone</h1>
+
+      <% if (error && error.length > 0) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+
+      <form action="/login" method="post">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <div class="role-toggle" style="margin:10px 0; display:flex; gap:12px; align-items:center;">
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="radio" name="role" value="user" checked /> Patient
+          </label>
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="radio" name="role" value="doctor" /> Doctor
+          </label>
+        </div>
+        <button type="submit" class="btn">Log In</button>
+      </form>
+
+      <div class="links">
+        <a href="/forgot">Forgot your password?</a>
+        <p>Don't have an account? <a href="/register">Register</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

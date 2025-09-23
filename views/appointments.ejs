@@ -12,8 +12,8 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <i class="bi bi-calendar-heart"></i>
-                <span>Zynk</span>
+                <img src="/images/logo.png" alt="Logo" class="logo-image">
+                <span>Synkrone</span>
             </div>
             
             <nav class="nav">
@@ -25,14 +25,7 @@
                     <i class="bi bi-calendar-event"></i>
                     <span>Appointments</span>
                 </a>
-                <a href="insights" class="nav-link">
-                    <i class="bi bi-calendar-event"></i>
-                    <span>AI Insights</span>
-                </a>
-                <a href="/doctor" class="nav-link">
-                    <i class="bi bi-heart-pulse"></i>
-                    <span>Doctor Portal</span>
-                </a>
+                <% /* Patient portal: hide AI Insights and Doctor Portal links */ %>
             </nav>
         </aside>
 
@@ -49,7 +42,7 @@
                         <i class="bi bi-search"></i>
                         <input type="text" id="searchInput" placeholder="Search...">
                     </div>
-                    <a href="/" class="btn-primary">
+                    <a href="/dashboard" class="btn-primary">
                         <i class="bi bi-plus"></i>
                         New
                     </a>
