@@ -6,8 +6,12 @@ const logger = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
+require('dotenv').config();
+
+// Import passport configuration
+require('./config/passport');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+
 const User = require('./models/users');
 const { connectDB } = require('./models');
 
@@ -18,6 +22,7 @@ const { router: insightsRouter } = require('./routes/insights');
 const authApiRouter = require('./routes/users');
 const doctorsApiRouter = require('./routes/doctors');
 const hospitalsApiRouter = require('./routes/hospitals');
+// Removed authRouter since Google OAuth routes are now in index.js
 
 const app = express();
 
@@ -50,9 +55,6 @@ app.use(flash());
 
 app.use(passport.initialize());
 app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
 app.use((req, res, next) => {
   res.locals.user = req.user;
@@ -66,6 +68,7 @@ app.use('/insights', insightsRouter);
 app.use('/api/auth', authApiRouter);
 app.use('/api/doctors', doctorsApiRouter);
 app.use('/api/hospitals', hospitalsApiRouter);
+// Removed app.use('/auth', authRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));

@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  avatar: {
+    type: String
+  },
   specialization: {
     type: String,
     required: false,
@@ -29,7 +37,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['user', 'doctor', 'admin'],
-    default: 'user',
+    required: true, // Make role required instead of having a default
     index: true
   },
   hospitalId: {

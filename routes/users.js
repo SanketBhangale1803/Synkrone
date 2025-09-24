@@ -7,6 +7,11 @@ const User = require('../models/users');
 router.post('/register', async (req, res) => {
   try {
     const { username, fullname, email, password, role, hospitalId } = req.body;
+    
+    if (!role) {
+      return res.status(400).json({ error: 'Role is required' });
+    }
+    
     const existing = await User.findOne({ username });
     if (existing) return res.status(400).json({ error: 'Username exists' });
 
@@ -15,7 +20,7 @@ router.post('/register', async (req, res) => {
       username,
       fullname,
       email,
-      role: role || 'user',
+      role: role, // Remove the fallback to 'user'
       hospitalId: role === 'doctor' ? hospitalId : undefined
     });
 

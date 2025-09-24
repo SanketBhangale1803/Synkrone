@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Registration - Synkrone</title>
+  <link rel="stylesheet" href="/stylesheets/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <img src="/images/logo.png" alt="logo" class="logo" />
+      <h1>Complete Your Registration</h1>
+      <p style="text-align: center; margin-bottom: 20px; color: #666;">Please select your role to complete the registration process.</p>
+
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+
+      <form action="/auth/google/complete" method="post">
+        <div class="role-toggle" style="margin:15px 0; display:flex; gap:20px; align-items:center; justify-content:center; background:#f8f9fa; padding:15px; border-radius:8px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; color: #757575">
+            <input type="radio" name="role" value="user" checked style="margin:0;"/> Patient
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; color: #757575">
+            <input type="radio" name="role" value="doctor" style="margin:0;"/> Doctor
+          </label>
+        </div>
+        
+        <div id="doctorFields" style="display:none; margin-top:10px;">
+          <input type="text" name="specialization" placeholder="Specialization" style="margin-bottom:10px; width:100%; padding:12px; border:1px solid #ddd; border-radius:5px;"/>
+          <select name="hospitalId" id="hospitalIdGoogle" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:5px;">
+            <option value="">Select hospital</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn" style="margin-top: 15px;">Complete Registration</button>
+      </form>
+
+      <div class="links" style="margin-top: 20px;">
+        <p><a href="/login">Back to Login</a></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const radios = document.querySelectorAll('input[name=role]');
+    const doctorFields = document.getElementById('doctorFields');
+    const hospitalSelect = document.getElementById('hospitalIdGoogle');
+    
+    function sync() {
+      const val = document.querySelector('input[name=role]:checked').value;
+      doctorFields.style.display = val === 'doctor' ? 'block' : 'none';
+    }
+    
+    radios.forEach(r => r.addEventListener('change', sync));
+    sync();
+    
+    // Load hospitals for doctor role
+    try {
+      const res = await fetch('/api/hospitals');
+      const data = await res.json();
+      (data.hospitals || []).forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h._id; 
+        opt.textContent = `${h.name} (${h.location})`;
+        hospitalSelect.appendChild(opt);
+      });
+    } catch(error) {
+      console.error('Failed to load hospitals:', error);
+    }
+  });
+</script>
+</body>
+</html>
