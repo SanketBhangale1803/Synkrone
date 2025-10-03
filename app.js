@@ -1,3 +1,7 @@
+//cron job for push notifications
+//const Appointment = require('views/appointments.ejs');
+
+
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
@@ -23,6 +27,10 @@ const authApiRouter = require('./routes/users');
 const doctorsApiRouter = require('./routes/doctors');
 const hospitalsApiRouter = require('./routes/hospitals');
 // Removed authRouter since Google OAuth routes are now in index.js
+
+const webpush = require('web-push');
+const cron = require('node-cron');
+const Appointment = require('./models/appointment');
 
 const app = express();
 
@@ -80,5 +88,81 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+
+// Push Notifications Setup
+
+webpush.setVapidDetails(
+  'mailto:youremail@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+
+let subscriptions = []; // in production, store in DB
+
+// Endpoint for client subscription
+app.post("/subscribe", async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      pushSubscription: req.body
+    });
+    res.status(201).json({ message: "Subscription saved" });
+  } catch (err) {
+    console.error("Error saving subscription:", err);
+    res.status(500).json({ error: "Failed to save subscription" });
+  }
+});
+
+// Function to send notification
+async function sendNotification(subscription, dataToSend) {
+  try {
+    await webpush.sendNotification(subscription, JSON.stringify(dataToSend));
+  } catch (err) {
+    if (err.statusCode === 410) {
+      console.log("Subscription expired, removing from DB");
+      await User.updateOne(
+        { "pushSubscription.endpoint": subscription.endpoint },
+        { $unset: { pushSubscription: "" } }
+      );
+    } else {
+      console.error("Push error:", err);
+    }
+  }
+}
+
+// Every minute, check appointments and notify if within 24h or 1h
+cron.schedule("* * * * *", async () => {
+  const now = new Date();
+  const appointments = await Appointment.find({});
+
+  for (const apt of appointments) {
+    const aptTime = new Date(`${apt.date}T${apt.time}`);
+    const diff = (aptTime - now) / 1000 / 60; // minutes
+
+    let message = null;
+    if (diff > 59 && diff < 61) {
+      message = `Reminder: You have an appointment with ${apt.doctorName} in 1 hour.`;
+    } else if (diff > 1439 && diff < 1441) {
+      message = `Reminder: Appointment with ${apt.doctorName} tomorrow at ${apt.time}.`;
+    }
+
+    if (message) {
+      // assuming each appointment has a `userId` field
+      const user = await User.findById(apt.userId);
+      if (user?.pushSubscription) {
+        await sendNotification(user.pushSubscription, {
+          title: "Appointment Reminder",
+          body: message
+        });
+      }
+    }
+  }
+});
+
 
 module.exports = app;
