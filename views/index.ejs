@@ -181,6 +181,12 @@
                       <label for="hospitalId">Hospital</label>
                       <select id="hospitalId" name="hospitalId" required>
                         <option value="">Select hospital</option>
+                        <!-- Fallback static hospitals -->
+                        <option value="baptist">Baptist Medical Center</option>
+                        <option value="city_clinic">City Clinic</option>
+                        <option value="general_hospital">General Hospital</option>
+                        <option value="st_marys">St. Mary’s Hospital</option>
+                        <option value="mercy_care">Mercy Care Center</option>
                       </select>
                     </div>
                     <div class="form-group">
@@ -358,6 +364,79 @@
     </div>
 
     <script>
+
+      const fallbackDoctors = {
+        baptist: [
+          { id: "dr_smith", name: "Dr. John Smith", specialization: "Cardiologist" },
+          { id: "dr_taylor", name: "Dr. Sarah Taylor", specialization: "Pediatrician" }
+        ],
+        city_clinic: [
+          { id: "dr_jones", name: "Dr. Emily Jones", specialization: "General Practitioner" },
+          { id: "dr_choi", name: "Dr. Daniel Choi", specialization: "Dermatologist" }
+        ],
+        general_hospital: [
+          { id: "dr_wilson", name: "Dr. Mark Wilson", specialization: "Orthopedic Surgeon" },
+          { id: "dr_patel", name: "Dr. Anita Patel", specialization: "Neurologist" }
+        ],
+        st_marys: [
+          { id: "dr_garcia", name: "Dr. Maria Garcia", specialization: "Oncologist" },
+          { id: "dr_lee", name: "Dr. Kevin Lee", specialization: "ENT Specialist" }
+        ],
+        mercy_care: [
+          { id: "dr_thompson", name: "Dr. Olivia Thompson", specialization: "Endocrinologist" },
+          { id: "dr_khan", name: "Dr. Ahmed Khan", specialization: "Pulmonologist" }
+        ]
+      };
+
+      document.getElementById('hospitalId').addEventListener('change', async function() {
+        const hospitalId = this.value;
+        const doctorSelect = document.getElementById('doctorId');
+        
+        doctorSelect.innerHTML = '<option value="">Loading...</option>';
+        doctorSelect.disabled = true;
+
+        if (!hospitalId) {
+          doctorSelect.innerHTML = '<option value="">Select a hospital first</option>';
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/doctors?hospitalId=${encodeURIComponent(hospitalId)}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            doctorSelect.innerHTML = '<option value="">Select doctor</option>';
+            (data.doctors || []).forEach(d => {
+              const opt = document.createElement('option');
+              opt.value = d._id;
+              opt.textContent = `${d.fullname || d.name} - ${d.specialization || ''}`;
+              doctorSelect.appendChild(opt);
+            });
+            doctorSelect.disabled = false;
+            return;
+          }
+        } catch (err) {
+          console.error('API doctor fetch failed:', err);
+        }
+
+        // If API failed or returned nothing, use fallback
+        const docs = fallbackDoctors[hospitalId] || [];
+        doctorSelect.innerHTML = docs.length
+          ? '<option value="">Select doctor</option>'
+          : '<option value="">No doctors available</option>';
+
+        docs.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = `${d.name} - ${d.specialization}`;
+          doctorSelect.appendChild(opt);
+        });
+
+        doctorSelect.disabled = !docs.length;
+      });
+
       // Set minimum date to today
       document.addEventListener('DOMContentLoaded', async function() {
         const today = new Date().toISOString().split('T')[0];
@@ -381,7 +460,7 @@
         } catch (_) {}
       });
       // Hospital → Doctors linkage
-      document.getElementById('hospitalId').addEventListener('change', async function() {
+      /*document.getElementById('hospitalId').addEventListener('change', async function() {
         const hospitalId = this.value;
         const doctorSelect = document.getElementById('doctorId');
         doctorSelect.innerHTML = '<option value="">Loading...</option>';
@@ -403,7 +482,7 @@
         } catch (e) {
           doctorSelect.innerHTML = '<option value="">Failed to load doctors</option>';
         }
-      });
+      });*/
 
       function scrollToBooking() {
         document.getElementById('bookingSection').scrollIntoView({ 
@@ -440,6 +519,23 @@
           }
         });
       });
+
+      async function registerPush() {
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+          const reg = await navigator.serviceWorker.register("/sw.js");
+          const subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: "<%= process.env.VAPID_PUBLIC_KEY %>"
+          });
+
+                await fetch("/subscribe", {
+                  method: "POST",
+                  body: JSON.stringify(subscription),
+                  headers: { "Content-Type": "application/json" }
+                });
+              }
+            }
+      registerPush();
     </script>
   </body>
 </html>
