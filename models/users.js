@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const plm = require('passport-local-mongoose');
 
 const userSchema = new mongoose.Schema({
-  fullname: String,
-  email: String,
   user_id: {
     type: String,
     required: true,
@@ -46,13 +44,6 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Hospital',
     required: function() { return this.role === 'doctor'; }
-  },
-  pushSubscription: {
-    endpoint: String,
-    keys: {
-      p256dh: String,
-      auth: String
-    }
   }
 }, {
   timestamps: true
