@@ -164,7 +164,5 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
-//test of branching
-//end of test of branching
 
 module.exports = app;
