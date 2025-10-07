@@ -13,7 +13,7 @@
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "express-rate-limit": "^8.1.0",
@@ -28,12 +28,14 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.18.0",
     "morgan": "~1.9.1",
+    "node-cron": "^4.2.1",
     "openai": "^5.8.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
     "session": "^0.1.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "web-push": "^3.6.7"
   }
 }

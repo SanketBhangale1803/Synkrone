@@ -199,5 +199,15 @@
         </div>
       </main>
     </div>
+    <div style="max-width:1200px;margin:20px auto;text-align:center;">
+      <button id="enable-notifications" class="btn-primary" style="background:#28a745;border:none;padding:10px 18px;border-radius:6px;">Enable Notifications</button>
+      <p style="font-size:12px;color:#666;margin-top:8px;">Enable push notifications to get reminders before your appointment.</p>
+    </div>
+    <script src="/javascripts/push.js"></script>
+    <script>
+      document.getElementById('enable-notifications').addEventListener('click', function() {
+        if (window.pushNotifications && window.pushNotifications.enable) window.pushNotifications.enable();
+      });
+    </script>
   </body>
 </html>
