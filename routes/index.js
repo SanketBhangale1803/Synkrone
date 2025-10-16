@@ -48,6 +48,13 @@ router.post('/register', async (req, res) => {
                                       formData: {username, fullname, email, role, hospitalId, specialization} });
     }
 
+    pwRequirements = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
+    if (!pwRequirements.test(password)) {
+      return res.status(400).render('register', { error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.', 
+                                      formData: {username, fullname, email, role, hospitalId, specialization} });
+    }
+
     // Validate required fields based on role
     if (role === 'doctor') {
       if (!specialization) {
