@@ -249,7 +249,15 @@ router.post('/appointments', async (req, res) => {
   }
 
   try {
-    const newAppointment = new Appointment({ name, phone, date, time, type });
+    const newAppointment = new Appointment({ 
+      name, 
+      phone, 
+      date, 
+      time, 
+      type,
+      userId: req.user._id,
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase() // Generate short confirmation number
+    });
     const savedAppointment = await newAppointment.save();
 
     req.session.lastAppointment = savedAppointment;

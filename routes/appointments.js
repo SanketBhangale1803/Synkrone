@@ -1,7 +1,11 @@
 var express = require('express');
 var router = express.Router();
 const { Appointment } = require('../models');
+const User = require('../models/users');
+const Hospital = require('../models/hospital');
 const auth = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
+const { sendConfirmationEmail, sendReminderEmail } = require('../services/emailService');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -111,7 +115,8 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       date,
       time,
       type,
-      notes: notes || ''
+      notes: notes || '',
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase() // Generate short confirmation number
     });
     
     const saved = await newAppointment.save();
@@ -243,6 +248,151 @@ router.get('/:id', auth.verifyToken, async function(req, res, next) {
   } catch (error) {
     console.error('Error fetching appointment:', error);
     res.status(500).json({ error: 'Error fetching appointment' });
+  }
+});
+
+/* POST enable email notifications for appointment */
+router.post('/enable-email-notifications', auth.verifyToken, async function(req, res, next) {
+  try {
+    const { appointmentId } = req.body;
+    
+    if (!appointmentId) {
+      return res.status(400).json({ error: 'Appointment ID is required' });
+    }
+    
+    // Find the appointment and verify ownership
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      userId: req.user._id
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    
+    if (appointment.emailNotificationsEnabled && appointment.confirmationEmailSent) {
+      return res.json({ 
+        success: true, 
+        message: 'Email notifications are already enabled for this appointment' 
+      });
+    }
+    
+    // Get doctor and hospital information
+    const doctor = await User.findById(appointment.doctorId);
+    const hospital = await Hospital.findById(appointment.hospitalId);
+    
+    if (!doctor || !hospital) {
+      return res.status(500).json({ error: 'Unable to retrieve appointment details' });
+    }
+    
+    // Send confirmation email
+    const emailResult = await sendConfirmationEmail(
+      req.user.email,
+      appointment,
+      doctor,
+      hospital
+    );
+    
+    if (emailResult.success) {
+      // Update appointment to mark email notifications as enabled
+      await Appointment.findByIdAndUpdate(appointmentId, {
+        emailNotificationsEnabled: true,
+        confirmationEmailSent: true
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Email notifications enabled and confirmation sent!',
+        messageId: emailResult.messageId
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to send confirmation email: ' + emailResult.error 
+      });
+    }
+  } catch (error) {
+    console.error('Error enabling email notifications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/* POST test email notifications - FOR TESTING ONLY */
+router.post('/test-email/:type', auth.verifyToken, async function(req, res, next) {
+  try {
+    const { type } = req.params;
+    const { appointmentId } = req.body;
+    
+    if (!appointmentId) {
+      return res.status(400).json({ error: 'Appointment ID is required' });
+    }
+    
+    // Validate email type
+    const validTypes = ['confirmation', 'oneDayBefore', 'twelveHoursBefore', 'oneHourBefore'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid email type' });
+    }
+    
+    // Find the appointment and verify ownership
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      userId: req.user._id
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    
+    // Get doctor and hospital information
+    const doctor = await User.findById(appointment.doctorId);
+    const hospital = await Hospital.findById(appointment.hospitalId);
+    
+    if (!doctor || !hospital) {
+      return res.status(500).json({ error: 'Unable to retrieve appointment details' });
+    }
+    
+    let emailResult;
+    let emailTypeLabel;
+    
+    if (type === 'confirmation') {
+      emailResult = await sendConfirmationEmail(
+        req.user.email,
+        appointment,
+        doctor,
+        hospital
+      );
+      emailTypeLabel = 'Confirmation Email';
+    } else {
+      emailResult = await sendReminderEmail(
+        req.user.email,
+        appointment,
+        doctor,
+        hospital,
+        type
+      );
+      
+      const typeLabels = {
+        oneDayBefore: '1-Day Reminder Email',
+        twelveHoursBefore: '12-Hour Reminder Email',
+        oneHourBefore: '1-Hour Reminder Email'
+      };
+      emailTypeLabel = typeLabels[type];
+    }
+    
+    if (emailResult.success) {
+      res.json({ 
+        success: true, 
+        message: `${emailTypeLabel} sent successfully!`,
+        messageId: emailResult.messageId,
+        sentTo: req.user.email
+      });
+    } else {
+      res.status(500).json({ 
+        error: `Failed to send ${emailTypeLabel.toLowerCase()}: ${emailResult.error}` 
+      });
+    }
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ error: 'Internal server error while sending test email' });
   }
 });
 

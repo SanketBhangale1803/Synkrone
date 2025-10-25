@@ -80,6 +80,12 @@
                 <i class="bi bi-plus-circle"></i>
                 Quick Book
               </button>
+              <% if (user) { %>
+              <button class="quick-action-btn" id="send-test-push" style="background:#28a745;color:#fff;margin-left:8px;">
+                <i class="bi bi-bell"></i>
+                Send Test Push
+              </button>
+              <% } %>
             </div>
           </div>
         </header>
@@ -439,6 +445,29 @@
             document.getElementById('type').value = type;
           }
         });
+      });
+
+      // Send Test Push button
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('send-test-push');
+        if (btn) {
+          btn.addEventListener('click', async () => {
+            try {
+              const res = await fetch('/api/push/test', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ body: 'Manual QA test push' })
+              });
+              const text = await res.text();
+              console.log('Test push response', res.status, text);
+              alert('Test push response: ' + res.status + '\n' + text);
+            } catch (e) {
+              console.error('Error sending test push', e);
+              alert('Error sending test push. See console.');
+            }
+          });
+        }
       });
     </script>
   </body>
