@@ -6,7 +6,7 @@ const User = require('../models/users');
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, fullname, email, password, role, hospitalId } = req.body;
+    const { username, fullname, email, password, confirmPassword, role, hospitalId } = req.body;
     
     if (!role) {
       return res.status(400).json({ error: 'Role is required' });
@@ -14,6 +14,13 @@ router.post('/register', async (req, res) => {
     
     const existing = await User.findOne({ username });
     if (existing) return res.status(400).json({ error: 'Username exists' });
+
+
+    if (password !== confirmPassword) {
+      console.log('❌ Password mismatch – aborting');
+      res.status(400);
+      return res.render('register', { error: 'Passwords do not match' });
+    }
 
     const user = new User({
       user_id: Date.now().toString(),
