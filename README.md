@@ -13,6 +13,13 @@ A comprehensive appointment management system built with Node.js, Express, and M
 - **Session Management**: Persistent sessions with MongoDB store
 - **User Registration**: Comprehensive registration with role selection
 
+### 📧 Email Notification System
+- **Secure Email Integration**: Encrypted Gmail credentials with AES-256 encryption
+- **Professional Email Templates**: HTML email templates for confirmations and reminders
+- **Automated Reminder System**: 1-day, 12-hour, and 1-hour appointment reminders
+- **User Opt-in**: Patients can choose to receive email notifications
+- **Test Interface**: Built-in testing tools for email functionality verification
+
 ### 🏥 Hospital Management System
 - **Hospital Database**: Pre-seeded with major US hospitals (Mayo Clinic, Cleveland Clinic, Johns Hopkins, etc.)
 - **Doctor-Hospital Association**: Doctors are linked to specific hospitals
@@ -78,7 +85,16 @@ A comprehensive appointment management system built with Node.js, Express, and M
    NODE_ENV=development
    ```
 
-4. **Seed Hospital Data**
+   **⚠️ Security Note**: Never commit your `.env` file to GitHub! Use the provided `.env.example` template.
+
+4. **Email Notification Setup** (Optional but recommended)
+   ```bash
+   # Run the secure credential setup for email notifications
+   node setup-credentials.js
+   ```
+   This will securely encrypt and store your Gmail credentials for email notifications.
+
+5. **Seed Hospital Data**
    ```bash
    node seedHospitals.js
    ```
@@ -277,6 +293,16 @@ A comprehensive appointment management system built with Node.js, Express, and M
 - **Role-based Authorization**: Endpoint protection by user role
 - **Input Validation**: Comprehensive data validation and sanitization
 - **Ownership Enforcement**: Users can only access their own data
+- **Encrypted Credentials**: Email credentials secured with AES-256 encryption
+- **Environment Protection**: Comprehensive .gitignore prevents sensitive data exposure
+- **Secure Email System**: Gmail integration with App Password authentication
+
+### 📧 Email Security
+- **AES-256 Encryption**: Email credentials are encrypted before storage
+- **Separated Keys**: Encryption keys stored separately from encrypted data
+- **No Plain Text**: Gmail passwords never stored in readable format
+- **Secure Setup**: Interactive credential setup script for safe configuration
+- **GitHub Safe**: Encrypted credentials can be safely committed to version control
 
 ## 📱 Responsive Design
 

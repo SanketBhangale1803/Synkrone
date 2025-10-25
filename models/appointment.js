@@ -69,6 +69,27 @@ const appointmentSchema = new mongoose.Schema({
   rejectionReason: {
     type: String,
     trim: true
+  },
+  confirmationNumber: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  emailNotificationsEnabled: {
+    type: Boolean,
+    default: false
+  },
+  confirmationEmailSent: {
+    type: Boolean,
+    default: false
+  },
+  reminderEmailsSent: {
+    type: Object,
+    default: {
+      oneDayBefore: false,
+      twelveHoursBefore: false,
+      oneHourBefore: false
+    }
   }
 }, {
   timestamps: true

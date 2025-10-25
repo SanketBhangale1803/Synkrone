@@ -197,7 +197,219 @@
             </a>
           </div>
         </div>
+        
+        <!-- Email Notification Opt-in Section -->
+        <div class="confirmation-container" style="margin-top: 20px;">
+          <h3>📧 Email Notifications</h3>
+          <p>Would you like to receive email confirmations and reminders for this appointment?</p>
+          
+          <form id="emailOptInForm" style="margin: 20px 0;">
+            <div style="margin: 15px 0;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="emailOptIn" style="margin-right: 10px; transform: scale(1.2);">
+                <span>Yes, send me email notifications</span>
+              </label>
+            </div>
+            
+            <div id="emailBenefits" style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; font-size: 14px;">
+              <strong>You will receive:</strong>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>✅ Immediate confirmation email with all appointment details</li>
+                <li>🗓️ Reminder email 1 day before your appointment</li>
+                <li>⏰ Reminder email 12 hours before your appointment</li>
+                <li>🚨 Reminder email 1 hour before your appointment</li>
+              </ul>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="background: #28a745; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">
+              <i class="bi bi-envelope-check"></i>
+              Enable Email Notifications
+            </button>
+          </form>
+          
+          <div id="emailStatus" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
+        </div>
+        
+        <!-- Email Testing Section - FOR DEVELOPMENT -->
+        <div class="confirmation-container" style="margin-top: 20px; border: 2px dashed #ffc107; background: #fff9e6;">
+          <h3>🧪 Email Testing (Development Only)</h3>
+          <p style="color: #856404; font-size: 14px; margin-bottom: 20px;">
+            <strong>⚠️ Testing Tools:</strong> Use these buttons to test email notifications before going live.
+          </p>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+            
+            <div style="text-align: center;">
+              <button type="button" class="test-email-btn" data-type="confirmation" 
+                      style="background: #007bff; color: white; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+                <i class="bi bi-envelope-check"></i><br>
+                Test Confirmation Email
+              </button>
+              <small style="color: #666; font-size: 12px;">Tests the immediate confirmation email with all appointment details</small>
+            </div>
+            
+            <div style="text-align: center;">
+              <button type="button" class="test-email-btn" data-type="oneDayBefore" 
+                      style="background: #28a745; color: white; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+                <i class="bi bi-calendar-date"></i><br>
+                Test 1-Day Reminder
+              </button>
+              <small style="color: #666; font-size: 12px;">Tests the reminder sent 1 day before appointment</small>
+            </div>
+            
+            <div style="text-align: center;">
+              <button type="button" class="test-email-btn" data-type="twelveHoursBefore" 
+                      style="background: #ffc107; color: #212529; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+                <i class="bi bi-clock"></i><br>
+                Test 12-Hour Reminder
+              </button>
+              <small style="color: #666; font-size: 12px;">Tests the reminder sent 12 hours before appointment</small>
+            </div>
+            
+            <div style="text-align: center;">
+              <button type="button" class="test-email-btn" data-type="oneHourBefore" 
+                      style="background: #dc3545; color: white; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+                <i class="bi bi-alarm"></i><br>
+                Test 1-Hour Reminder
+              </button>
+              <small style="color: #666; font-size: 12px;">Tests the urgent reminder sent 1 hour before appointment</small>
+            </div>
+            
+          </div>
+          
+          <div id="testEmailStatus" style="margin-top: 15px; padding: 12px; border-radius: 6px; display: none; font-size: 14px;"></div>
+          
+          <div style="background: #e9ecef; padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 13px; color: #495057;">
+            <strong>📧 Email Testing Instructions:</strong>
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+              <li>Each button sends a test email to: <strong><%= user?.email || 'your registered email' %></strong></li>
+              <li>Check your email inbox (and spam folder) after clicking each button</li>
+              <li>Test emails use real appointment data but won't affect reminder scheduling</li>
+              <li>Remove this section in production by setting NODE_ENV=production</li>
+            </ul>
+          </div>
+        </div>
       </main>
     </div>
+    
+    <script>
+      // Email opt-in form handling
+      document.getElementById('emailOptInForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const checkbox = document.getElementById('emailOptIn');
+        const statusDiv = document.getElementById('emailStatus');
+        const submitButton = this.querySelector('button[type="submit"]');
+        
+        if (!checkbox.checked) {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#fff3cd';
+          statusDiv.style.color = '#856404';
+          statusDiv.innerHTML = '⚠️ Please check the box to enable email notifications.';
+          return;
+        }
+        
+        // Show loading state
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Enabling...';
+        
+        try {
+          const response = await fetch('/api/appointments/enable-email-notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              appointmentId: '<%= appointmentData._id %>'
+            })
+          });
+          
+          const result = await response.json();
+          
+          statusDiv.style.display = 'block';
+          if (result.success) {
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            statusDiv.innerHTML = '✅ Email notifications enabled! Check your email for confirmation.';
+            submitButton.style.display = 'none';
+            checkbox.disabled = true;
+          } else {
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = '❌ ' + (result.error || 'Failed to enable email notifications.');
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="bi bi-envelope-check"></i> Enable Email Notifications';
+          }
+        } catch (error) {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#f8d7da';
+          statusDiv.style.color = '#721c24';
+          statusDiv.innerHTML = '❌ Network error. Please try again.';
+          submitButton.disabled = false;
+          submitButton.innerHTML = '<i class="bi bi-envelope-check"></i> Enable Email Notifications';
+        }
+      });
+
+      // Test email button handlers
+      document.querySelectorAll('.test-email-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+          const emailType = this.getAttribute('data-type');
+          const statusDiv = document.getElementById('testEmailStatus');
+          const originalContent = this.innerHTML;
+          
+          // Show loading state
+          this.disabled = true;
+          this.innerHTML = '<i class="bi bi-arrow-clockwise"></i><br>Sending...';
+          
+          try {
+            const response = await fetch(`/api/appointments/test-email/${emailType}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                appointmentId: '<%= appointmentData._id %>'
+              })
+            });
+            
+            const result = await response.json();
+            
+            statusDiv.style.display = 'block';
+            if (result.success) {
+              statusDiv.style.background = '#d4edda';
+              statusDiv.style.color = '#155724';
+              statusDiv.style.border = '1px solid #c3e6cb';
+              statusDiv.innerHTML = `
+                <strong>✅ ${result.message}</strong><br>
+                <small>Sent to: ${result.sentTo}<br>
+                Message ID: ${result.messageId}</small>
+              `;
+            } else {
+              statusDiv.style.background = '#f8d7da';
+              statusDiv.style.color = '#721c24';
+              statusDiv.style.border = '1px solid #f5c6cb';
+              statusDiv.innerHTML = `❌ ${result.error}`;
+            }
+          } catch (error) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.style.border = '1px solid #f5c6cb';
+            statusDiv.innerHTML = '❌ Network error. Please try again.';
+          } finally {
+            // Restore button state
+            this.disabled = false;
+            this.innerHTML = originalContent;
+          }
+        });
+      });
+    </script>
+    
+    <script src="/javascripts/push.js"></script>
+    <script>
+      document.getElementById('enable-notifications').addEventListener('click', function() {
+        if (window.pushNotifications && window.pushNotifications.enable) window.pushNotifications.enable();
+      });
+    </script>
   </body>
 </html>

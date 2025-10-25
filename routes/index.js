@@ -32,15 +32,27 @@ router.post('/login', (req, res, next) => {
 });
 
 router.get('/register', (req, res) => {
-  res.render('register', { error: null });
+  res.render('register', { error: null, formData: {} });
 });
 
 router.post('/register', async (req, res) => {
-  const { username, fullname, email, password, role, hospitalId, specialization } = req.body;
+  const { username, fullname, email, password, confirmPassword, role, hospitalId, specialization } = req.body;
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.render('register', { error: 'Username already exists' });
+    }
+    if (password !== confirmPassword) {
+      console.log('❌ Password mismatch – aborting');
+      return res.status(400).render('register', { error: 'Passwords do not match', 
+                                      formData: {username, fullname, email, role, hospitalId, specialization} });
+    }
+
+    pwRequirements = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
+    if (!pwRequirements.test(password)) {
+      return res.status(400).render('register', { error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.', 
+                                      formData: {username, fullname, email, role, hospitalId, specialization} });
     }
 
     // Validate required fields based on role
@@ -237,7 +249,15 @@ router.post('/appointments', async (req, res) => {
   }
 
   try {
-    const newAppointment = new Appointment({ name, phone, date, time, type });
+    const newAppointment = new Appointment({ 
+      name, 
+      phone, 
+      date, 
+      time, 
+      type,
+      userId: req.user._id,
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase() // Generate short confirmation number
+    });
     const savedAppointment = await newAppointment.save();
 
     req.session.lastAppointment = savedAppointment;
