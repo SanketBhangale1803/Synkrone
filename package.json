@@ -32,7 +32,6 @@
     "mongoose": "^8.18.0",
     "morgan": "^1.10.1",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.9",
     "openai": "^5.8.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
