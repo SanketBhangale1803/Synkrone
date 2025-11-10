@@ -42,6 +42,12 @@
 
   async function subscribeUser() {
     try {
+      // Check if already subscribed via localStorage
+      if (localStorage.getItem('pushNotificationsEnabled') === 'true') {
+        console.log('Push notifications already enabled');
+        return;
+      }
+
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         alert('Notification permission is required to receive appointment reminders.');
@@ -82,6 +88,8 @@
       console.log('Subscribe response status:', resp.status, 'body:', text);
       if (!resp.ok) throw new Error('Failed to save subscription on server: ' + text);
 
+      // Store the enabled state in localStorage
+      localStorage.setItem('pushNotificationsEnabled', 'true');
       alert('Notifications enabled. You will receive appointment reminders.');
     } catch (err) {
       console.error('Subscription error:', err);
@@ -89,6 +97,29 @@
     }
   }
 
-  // Expose a helper to window for UI to call
-  window.pushNotifications = { enable: subscribeUser };
+  // Check if notifications are already enabled on load
+  async function checkExistingSubscription() {
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            localStorage.setItem('pushNotificationsEnabled', 'true');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking existing subscription:', error);
+      }
+    }
+  }
+
+  // Run the check on load
+  checkExistingSubscription();
+
+  // Expose helper to window for UI to call
+  window.pushNotifications = { 
+    enable: subscribeUser,
+    isEnabled: () => localStorage.getItem('pushNotificationsEnabled') === 'true'
+  };
 })();

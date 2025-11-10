@@ -74,6 +74,13 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true
+  },
+  remindersSent: {
+    type: Object,
+    default: {
+      oneDayBefore: false,
+      oneHourBefore: false
+    }
   }
 }, {
   timestamps: true

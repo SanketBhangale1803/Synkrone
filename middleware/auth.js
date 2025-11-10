@@ -36,5 +36,3 @@ auth.enforceOwnership = (getFilter) => async (req, res, next) => {
 };
 
 module.exports = auth;
-
-

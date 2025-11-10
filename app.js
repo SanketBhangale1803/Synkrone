@@ -32,8 +32,12 @@ const webpush = require('web-push');
 const cron = require('node-cron');
 const Appointment = require('./models/appointment');
 const Hospital = require('./models/hospital');
+const notificationService = require('./services/notificationService');
 
 const app = express();
+
+// Trust proxy (needed for secure cookies with ngrok)
+app.set('trust proxy', 1);
 
 connectDB();
 
@@ -54,8 +58,9 @@ app.use(session({
     ttl: 24 * 60 * 60
   }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Required for ngrok HTTPS
     httpOnly: true,
+    sameSite: 'none', // Required for ngrok HTTPS
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
@@ -123,6 +128,130 @@ app.post('/api/push/test', async (req, res) => {
   } catch (err) {
     console.error('Error sending test push:', err);
     res.status(500).json({ error: 'Failed to send test push' });
+  }
+});
+
+// New unified notification test endpoint
+app.post('/api/notifications/test', async (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  
+  try {
+    const { title, message, channels } = req.body;
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const options = {
+      skipEmail: channels && !channels.includes('email'),
+      skipWebPush: channels && !channels.includes('webPush')
+    };
+
+    const results = await notificationService.sendNotification(
+      user,
+      title || 'Test Notification',
+      message || 'This is a test notification from Synkrone.',
+      options
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Notifications sent!',
+      results 
+    });
+  } catch (err) {
+    console.error('Error sending test notifications:', err);
+    res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+// Test email configuration endpoint
+app.post('/api/notifications/test-email-config', async (req, res) => {
+  try {
+    const testResult = await notificationService.testEmailConfiguration();
+    if (testResult && testResult.success) {
+      res.json({ success: true, message: 'Email configuration is working' });
+    } else {
+      res.json({ success: false, error: testResult ? testResult.error : 'Email service not configured' });
+    }
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// System status endpoint
+app.get('/api/notifications/status', async (req, res) => {
+  try {
+    const user = req.user ? await User.findById(req.user._id) : null;
+    
+    res.json({
+      authenticated: !!req.user,
+      email: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASSWORD,
+      webPush: !!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY,
+      user: user ? {
+        email: user.email,
+        notificationPreferences: user.notificationPreferences
+      } : null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Appointment reminder cron job - now with multi-channel support
+cron.schedule("*/5 * * * *", async () => {
+  const now = new Date();
+  console.log(`Running appointment reminder check at ${now.toISOString()}`);
+  
+  try {
+    const appointments = await Appointment.find({
+      status: { $nin: ['cancelled', 'completed'] }
+    }).populate('userId doctorId hospitalId');
+
+    for (const apt of appointments) {
+      if (!apt.date || !apt.time) continue;
+
+      try {
+        const [y, m, d] = apt.date.split('-').map(Number);
+        const [hh, mm] = apt.time.split(':').map(Number);
+        const aptTime = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+
+        const diffMinutes = (aptTime - now) / 1000 / 60;
+        
+        let reminderType = null;
+        let shouldSend = false;
+
+        // 1 day before (1440 minutes)
+        if (Math.abs(diffMinutes - 1440) <= 15 && !apt.remindersSent?.oneDayBefore) {
+          reminderType = 'oneDayBefore';
+          shouldSend = true;
+        }
+        // 1 hour before (60 minutes)
+        else if (Math.abs(diffMinutes - 60) <= 10 && !apt.remindersSent?.oneHourBefore) {
+          reminderType = 'oneHourBefore';
+          shouldSend = true;
+        }
+
+        if (shouldSend && reminderType && apt.userId) {
+          const title = `Appointment Reminder - ${reminderType.replace(/([A-Z])/g, ' $1')}`;
+          const message = `Your appointment with Dr. ${apt.doctorId?.fullname || 'Doctor'} at ${apt.hospitalId?.name || 'Hospital'} is scheduled for ${apt.date} at ${apt.time}.`;
+
+          await notificationService.sendNotification(apt.userId, title, message);
+
+          // Mark reminder as sent
+          await Appointment.findByIdAndUpdate(apt._id, {
+            [`remindersSent.${reminderType}`]: true
+          });
+
+          console.log(`${reminderType} reminder sent for appointment ${apt._id}`);
+        }
+      } catch (error) {
+        console.error(`Error processing appointment ${apt._id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error in reminder cron job:', error);
   }
 });
 

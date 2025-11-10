@@ -36,7 +36,7 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { username, fullname, email, password, confirmPassword, role, hospitalId, specialization } = req.body;
+  const { username, fullname, email, password, confirmPassword, role, hospitalId, specialization, emailNotifications, webPushNotifications } = req.body;
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
@@ -49,7 +49,6 @@ router.post('/register', async (req, res) => {
     }
 
     pwRequirements = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
     if (!pwRequirements.test(password)) {
       return res.status(400).render('register', { error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.', 
                                       formData: {username, fullname, email, role, hospitalId, specialization} });
@@ -70,8 +69,12 @@ router.post('/register', async (req, res) => {
       user_id, 
       username, 
       fullname, 
-      email, 
-      role: role // Use the selected role directly, no fallback to 'user'
+      email,
+      role: role,
+      notificationPreferences: {
+        email: emailNotifications === 'on',
+        webPush: webPushNotifications === 'on'
+      }
     };
 
     // Add doctor-specific fields if role is doctor
@@ -280,6 +283,16 @@ router.get('/confirmation', (req, res) => {
   const appointmentData = req.session?.lastAppointment;
   if (!appointmentData) return res.redirect('/dashboard');
   res.render('confirmation', { title: 'Appointment Confirmed', appointmentData });
+});
+
+router.get('/notification-diagnostics', (req, res) => {
+  if (!req.isAuthenticated()) return res.redirect('/login');
+  res.render('notification-diagnostics', { title: 'Notification Diagnostics', user: req.user });
+});
+
+router.get('/test-notifications', (req, res) => {
+  if (!req.isAuthenticated()) return res.redirect('/login');
+  res.render('test-notifications', { title: 'Test Notifications', user: req.user });
 });
 
 module.exports = router;

@@ -363,6 +363,8 @@
       </main>
     </div>
 
+    <!-- Load push notification system -->
+    <script src="/javascripts/push.js"></script>
     <script>
       // Set minimum date to today
       document.addEventListener('DOMContentLoaded', async function() {
@@ -449,26 +451,155 @@
 
       // Send Test Push button
       document.addEventListener('DOMContentLoaded', () => {
+        // Auto-enable push notifications when page loads
+        setTimeout(checkAndEnablePushNotifications, 1000);
+        
         const btn = document.getElementById('send-test-push');
         if (btn) {
           btn.addEventListener('click', async () => {
             try {
+              // First check if user has push subscription
+              const statusRes = await fetch('/api/notifications/status');
+              const statusData = await statusRes.json();
+              
+              if (!statusData.user || !statusData.authenticated) {
+                alert('Please log in to test notifications');
+                return;
+              }
+              
               const res = await fetch('/api/push/test', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ body: 'Manual QA test push' })
+                body: JSON.stringify({ body: 'Manual QA test push from dashboard' })
               });
-              const text = await res.text();
-              console.log('Test push response', res.status, text);
-              alert('Test push response: ' + res.status + '\n' + text);
+              const data = await res.json();
+              
+              if (data.success) {
+                alert('✅ Test push notification sent successfully!');
+              } else {
+                if (data.error.includes('No push subscription found')) {
+                  alert('⚠️ Push notifications not enabled yet. Click "Enable Notifications" first.');
+                  showNotificationSetup();
+                } else {
+                  alert('❌ Error: ' + data.error);
+                }
+              }
             } catch (e) {
               console.error('Error sending test push', e);
-              alert('Error sending test push. See console.');
+              alert('❌ Network error. Please try again.');
             }
           });
         }
       });
+
+      // Auto-enable push notifications function
+      async function checkAndEnablePushNotifications() {
+        try {
+          // Check if browser supports notifications
+          if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            console.log('Browser does not support push notifications');
+            return;
+          }
+
+          // Check localStorage first
+          if (localStorage.getItem('pushNotificationsEnabled') === 'true') {
+            console.log('Push notifications already enabled via localStorage');
+            return;
+          }
+
+          // Check if we've already shown the prompt in this session
+          if (sessionStorage.getItem('notificationPromptShown')) {
+            return;
+          }
+
+          // Check current permission status
+          const permission = Notification.permission;
+          
+          if (permission === 'default') {
+            // Show a friendly prompt to enable notifications
+            showNotificationSetup();
+            // Mark that we've shown the prompt
+            sessionStorage.setItem('notificationPromptShown', 'true');
+          } else if (permission === 'granted') {
+            // Check if there's an active subscription
+            const reg = await navigator.serviceWorker.getRegistration();
+            if (reg) {
+              const sub = await reg.pushManager.getSubscription();
+              if (sub) {
+                // We have an active subscription, mark as enabled
+                localStorage.setItem('pushNotificationsEnabled', 'true');
+                return;
+              }
+            }
+
+            // If we get here, permission is granted but no subscription exists
+            if (window.pushNotifications?.enable) {
+              await window.pushNotifications.enable();
+            }
+          }
+        } catch (error) {
+          console.error('Error checking push notification status:', error);
+        }
+      }
+
+      // Show notification setup prompt
+      function showNotificationSetup() {
+        if (document.getElementById('notification-prompt')) return; // Already showing
+        
+        const prompt = document.createElement('div');
+        prompt.id = 'notification-prompt';
+        prompt.innerHTML = `
+          <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: #007bff; color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-width: 350px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <i class="bi bi-bell" style="font-size: 1.2rem;"></i>
+              <strong>Enable Notifications</strong>
+              <button onclick="closeNotificationPrompt()" style="background: none; border: none; color: white; margin-left: auto; cursor: pointer; font-size: 1.2rem;">&times;</button>
+            </div>
+            <p style="margin: 0 0 15px 0; font-size: 14px;">Get instant appointment reminders and updates!</p>
+            <div style="display: flex; gap: 10px;">
+              <button onclick="enablePushNotifications()" style="background: white; color: #007bff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 500;">Enable</button>
+              <button onclick="closeNotificationPrompt()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Later</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(prompt);
+      }
+
+      // Enable push notifications
+      async function enablePushNotifications() {
+        try {
+          if (window.pushNotifications && window.pushNotifications.enable) {
+            await window.pushNotifications.enable();
+            closeNotificationPrompt();
+            
+            // Show success message
+            const success = document.createElement('div');
+            success.innerHTML = `
+              <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: #28a745; color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <i class="bi bi-check-circle" style="font-size: 1.2rem;"></i>
+                  <strong>Notifications Enabled!</strong>
+                </div>
+                <p style="margin: 5px 0 0 0; font-size: 14px;">You'll now receive appointment reminders.</p>
+              </div>
+            `;
+            document.body.appendChild(success);
+            setTimeout(() => success.remove(), 4000);
+          } else {
+            alert('Push notification system not loaded. Please refresh the page.');
+          }
+        } catch (error) {
+          console.error('Error enabling notifications:', error);
+          alert('Could not enable notifications. Please check browser settings.');
+        }
+      }
+
+      // Close notification prompt
+      function closeNotificationPrompt() {
+        const prompt = document.getElementById('notification-prompt');
+        if (prompt) prompt.remove();
+      }
     </script>
   </body>
 </html>

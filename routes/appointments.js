@@ -5,6 +5,7 @@ const User = require('../models/users');
 const Hospital = require('../models/hospital');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
+const notificationService = require('../services/notificationService');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -105,6 +106,10 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       return res.redirect('/appointments');
     }
     
+    // Fetch doctor and hospital details for the notification
+    const doctor = await User.findById(doctorId);
+    const hospital = await Hospital.findById(hospitalId);
+    
     const newAppointment = new Appointment({
       userId: req.user._id,
       doctorId,
@@ -115,10 +120,40 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       time,
       type,
       notes: notes || '',
-      confirmationNumber: uuidv4().split('-')[0].toUpperCase() // Generate short confirmation number
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase()
     });
     
     const saved = await newAppointment.save();
+
+    // Send immediate email notification
+    const emailTitle = 'Appointment Confirmation';
+    const emailMessage = `
+      Your appointment has been confirmed!
+      
+      Details:
+      - Date: ${date}
+      - Time: ${time}
+      - Doctor: ${doctor ? doctor.fullname : 'Your doctor'}
+      - Hospital: ${hospital ? hospital.name : 'The hospital'}
+      - Type: ${type}
+      - Confirmation Number: ${saved.confirmationNumber}
+      
+      Please arrive 10 minutes before your scheduled time.
+      If you need to reschedule, please contact us at least 24 hours in advance.
+    `;
+
+    try {
+      await notificationService.sendNotification(
+        req.user,
+        emailTitle,
+        emailMessage,
+        { skipWebPush: true }  // Only send email, not push notification
+      );
+    } catch (notificationError) {
+      console.error('Error sending confirmation notification:', notificationError);
+      // Continue with the appointment creation even if notification fails
+    }
+
     // Save for confirmation page
     req.session.lastAppointment = saved;
     return req.session.save(() => res.redirect('/confirmation'));
