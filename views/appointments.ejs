@@ -99,18 +99,17 @@
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="filters">
-                <div class="filter-group">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="pending">Pending</button>
-                    <button class="filter-btn" data-filter="completed">Completed</button>
-                    <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+            <div class="filters" role="region" aria-label="Appointment filters">
+                <div class="filter-group" role="tablist" aria-label="Appointment status tabs">
+                    <button class="filter-btn" role="tab" data-filter="all" aria-selected="false" id="tab-all" aria-controls="appointments-grid">All</button>
+                    <button class="filter-btn" role="tab" data-filter="pending" aria-selected="false" id="tab-pending" aria-controls="appointments-grid">Pending</button>
+                    <button class="filter-btn" role="tab" data-filter="completed" aria-selected="false" id="tab-completed" aria-controls="appointments-grid">Completed</button>
+                    <button class="filter-btn" role="tab" data-filter="cancelled" aria-selected="false" id="tab-cancelled" aria-controls="appointments-grid">Cancelled</button>
                 </div>
             </div>
 
             <!-- Appointments Grid -->
-            <div class="appointments-grid">
+            <div class="appointments-grid" id="appointments-grid" role="region" aria-live="polite">
                 <% if (appointments.length === 0) { %>
                     <div class="empty-state">
                         <i class="bi bi-calendar-x"></i>
@@ -190,40 +189,135 @@
     </div>
 
     <script>
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const cards = document.querySelectorAll('.appointment-card');
-            
-            cards.forEach(card => {
-                const name = card.dataset.name;
-                const phone = card.dataset.phone;
-                const isVisible = name.includes(searchTerm) || phone.includes(searchTerm);
-                card.style.display = isVisible ? 'block' : 'none';
-            });
+    // Tabs + Search + Filter logic
+    (function () {
+      // elements
+      const tabButtons = Array.from(document.querySelectorAll('.filter-btn'));
+      const searchInput = document.getElementById('searchInput');
+      const cards = () => Array.from(document.querySelectorAll('.appointment-card'));
+      const APPOINTMENTS_GRID_ID = 'appointments-grid';
+
+      function setActiveTab(selectedBtn) {
+        tabButtons.forEach(btn => {
+          const isActive = btn === selectedBtn;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          // keep tabindex so only active tab is tabbable (accessibility nicety)
+          btn.tabIndex = isActive ? 0 : -1;
+        });
+      }
+
+      //filter cards by status + search term
+      function applyFilter(filter, searchTerm = '') {
+        let visibleCount = 0;
+        cards().forEach(card => {
+          const status = (card.dataset.status || 'pending').toLowerCase();
+          const name = (card.dataset.name || '').toLowerCase();
+          const phone = (card.dataset.phone || '').toLowerCase();
+          const matchesFilter = (filter === 'all') || (status === filter);
+          const matchesSearch = !searchTerm || name.includes(searchTerm) || phone.includes(searchTerm);
+
+          const shouldShow = matchesFilter && matchesSearch;
+          card.style.display = shouldShow ? '' : 'none';
+          if (shouldShow) visibleCount++;
         });
 
-        // Filter functionality
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Update active button
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                const filter = this.dataset.filter;
-                const cards = document.querySelectorAll('.appointment-card');
-                
-                cards.forEach(card => {
-                    if (filter === 'all' || card.dataset.status === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
+        // If no cards visible, show any existing empty-state message (or create one)
+        const grid = document.getElementById(APPOINTMENTS_GRID_ID);
+        const existingEmpty = grid.querySelector('.empty-state');
+        if (visibleCount === 0) {
+          if (!existingEmpty) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-state';
+            emptyDiv.innerHTML = '<i class="bi bi-calendar-x"></i><h3>No matching appointments</h3><p>No appointments found for this filter/search.</p>';
+            grid.insertBefore(emptyDiv, grid.firstChild);
+          } else {
+            existingEmpty.style.display = '';
+          }
+        } else {
+          if (existingEmpty) existingEmpty.style.display = 'none';
+        }
+      }
+
+      // Apply tab selection (button click)
+      function onTabSelect(btn, pushHistory = true) {
+        const filter = (btn.dataset.filter || 'all').toLowerCase();
+        setActiveTab(btn);
+        const searchTerm = (searchInput.value || '').toLowerCase();
+        applyFilter(filter, searchTerm);
+
+        // Update URL hash to persist selection
+        if (pushHistory) {
+          try {
+            history.replaceState(null, '', `#${filter}`);
+          } catch (e) {
+            // ignore if not allowed
+          }
+        }
+      }
+
+      // keyboard navigation for tabs (Left/Right, Home/End)
+      tabButtons.forEach((btn, idx) => {
+        btn.addEventListener('keydown', (e) => {
+          const key = e.key;
+          if (key === 'ArrowRight' || key === 'ArrowLeft' || key === 'Home' || key === 'End') {
+            e.preventDefault();
+            let nextIdx;
+            if (key === 'ArrowRight') nextIdx = (idx + 1) % tabButtons.length;
+            if (key === 'ArrowLeft') nextIdx = (idx - 1 + tabButtons.length) % tabButtons.length;
+            if (key === 'Home') nextIdx = 0;
+            if (key === 'End') nextIdx = tabButtons.length - 1;
+            tabButtons[nextIdx].focus();
+          }
+          // Enter / Space to activate
+          if (key === 'Enter' || key === ' ') {
+            e.preventDefault();
+            onTabSelect(btn);
+          }
         });
 
-        // Status update
+        btn.addEventListener('click', () => onTabSelect(btn));
+      });
+
+      // Search updates live (keeps selected tab applied)
+      searchInput.addEventListener('input', function () {
+        const active = tabButtons.find(b => b.classList.contains('active')) || tabButtons[0];
+        const filter = (active && active.dataset.filter) ? active.dataset.filter : 'all';
+        applyFilter(filter.toLowerCase(), (this.value || '').toLowerCase());
+      });
+
+      // Initialize: choose tab from URL hash if present, else from .active, else first tab
+      function init() {
+        // match hash like #pending
+        const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+        let initialBtn = tabButtons.find(b => b.dataset.filter === hash);
+        if (!initialBtn) initialBtn = tabButtons.find(b => b.classList.contains('active')) || tabButtons[0];
+
+        // ensure exactly one active
+        setActiveTab(initialBtn);
+
+        // apply filter according to initial tab and current search value
+        applyFilter((initialBtn.dataset.filter || 'all').toLowerCase(), (searchInput.value || '').toLowerCase());
+
+        // ensure only active tab is in tab order
+        tabButtons.forEach(b => b.tabIndex = b.classList.contains('active') ? 0 : -1);
+      }
+
+      // run init on DOM ready (we're at bottom of page so safe)
+      init();
+
+      // Expose small helper for other actions (optional)
+      window.__appointmentsFilter = {
+        apply: (filter) => {
+          const btn = tabButtons.find(b => b.dataset.filter === filter) || tabButtons[0];
+          onTabSelect(btn);
+        }
+      };
+    })();
+    </script>
+
+    <!-- existing functions for updateStatus/delete/edit left unchanged -->
+    <script>
         function updateStatus(id, status) {
             if (status === 'cancelled' && !confirm('Cancel this appointment?')) return;
             if (status === 'completed' && !confirm('Mark as completed?')) return;
@@ -244,7 +338,6 @@
             .catch(() => alert('Error updating appointment'));
         }
 
-        // Delete appointment
         function deleteAppointment(id) {
             if (!confirm('Permanently delete this appointment?')) return;
             
@@ -262,9 +355,7 @@
             .catch(() => alert('Error deleting appointment'));
         }
 
-        // Edit appointment (simple redirect for now)
         function editAppointment(id) {
-            // For simplicity, just redirect to main page with appointment ID
             window.location.href = `/?edit=${id}`;
         }
     </script>
