@@ -522,7 +522,7 @@ body {
 .appointment-form {
   padding: 32px 20px;
   display: flex;
-  flex-direction: center;
+  justify-content: center;
 }
 
 .form-container {
@@ -657,6 +657,10 @@ body {
   position: relative;
   overflow: hidden;
 }
+.action-card .doctor{
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
 
 .action-card::before {
   content: '';
@@ -761,6 +765,7 @@ body {
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  margin-top: 10px;
 }
 
 .tips-header {
