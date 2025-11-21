@@ -5,8 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Synkrone</title>
   <link rel="stylesheet" href="/stylesheets/login.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </head>
 <body>
+  <button id="dark-mode-toggle-btn" title="Enable dark mode" aria-label="Toggle dark mode" aria-pressed="false" style="position: absolute; top: 1rem; right: 5rem; padding: 0.5rem 1rem; background: #007bff; color: white; border: 2px solid white; border-radius: 4px; cursor: pointer; font-weight: bold; z-index: 1000;">
+    <i class="bi bi-moon" style="margin-right: 0.5rem;"></i>Dark mode
+  </button>
+  
+  
+  <button id="high-contrast-toggle-btn" title="Enable high-contrast mode" aria-label="Toggle high-contrast mode" aria-pressed="false" style="position: absolute; top: 1rem; right: 1rem; padding: 0.5rem 1rem; 
+  background: #007bff; color: white; border: 2px solid white; border-radius: 4px; cursor: pointer; font-weight: bold; z-index: 1000;">
+    <i class="bi bi-eye" style="margin-right: 0.5rem;"></i>High Contrast
+  </button>
+
   <div class="login-container">
     <div class="brand-hero">
       <img src="/images/logo.png" alt="Synkrone logo" class="hero-logo" />
@@ -49,5 +60,8 @@
       </div>
     </div>
   </div>
+
+  <script src="/javascripts/high-contrast.js"></script>
+  <script src= "/javascripts/dark-mode.js"></script>
 </body>
 </html>

@@ -1,0 +1,589 @@
+/* dark mode theme*/
+
+:root {
+  --dm-bg-primary: #0f172a;
+  --dm-bg-secondary: #1e293b;
+  --dm-bg-tertiary: #334155;
+  --dm-text-primary: #f1f5f9;
+  --dm-text-secondary: #cbd5e0;
+  --dm-text-tertiary: #94a3b8;
+  --dm-accent: #3b82f6;
+  --dm-accent-light: #60a5fa;
+  --dm-border: #475569;
+  --dm-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/*base styles*/
+body {
+  background-color: var(--dm-bg-primary) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+/*headers*/
+header, .patient-header, .page-header {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--dm-text-primary) !important;
+}
+
+/* side and navigation*/
+.sidebar, .patient-sidebar, aside, .app-container {
+  background-color: var(--dm-bg-secondary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.sidebar-header, .logo-container {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.nav-item, .nav-link {
+  color: var(--dm-text-secondary) !important;
+  background-color: transparent !important;
+}
+
+.nav-item:hover, .nav-link:hover {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+.nav-item.active, .nav-link.active {
+  background-color: var(--dm-accent) !important;
+  color: #ffffff !important;
+}
+
+/* Main Content */
+.patient-main, .appointments-main, .main-content {
+  background-color: var(--dm-bg-primary) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+/* Cards & Containers */
+.card, .panel, .stat-card, .appointment-card, 
+.booking-section, .quick-actions-section, .activity-section,
+.action-card, .health-tips {
+  background-color: var(--dm-bg-secondary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.card:hover, .stat-card:hover, .appointment-card:hover, .action-card:hover {
+  background-color: var(--dm-bg-tertiary) !important;
+  box-shadow: 0 12px 30px var(--dm-shadow) !important;
+}
+
+/* Buttons */
+.btn, .btn-primary, .btn-secondary, .btn-small, .btn-success, .btn-danger,
+.quick-action-btn, .filter-btn, .filter-button, .action-btn {
+  background-color: var(--dm-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--dm-accent) !important;
+}
+
+.btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-small:hover, .btn-success:hover, .btn-danger:hover,
+.quick-action-btn:hover, .filter-btn:hover, .filter-button:hover, .action-btn:hover {
+  background-color: var(--dm-accent-light) !important;
+  border-color: var(--dm-accent-light) !important;
+}
+
+.btn-secondary, .btn-secondary:hover {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--dm-border) !important;
+}
+
+/* Form Elements */
+input, textarea, select, [type="text"], [type="email"], 
+[type="password"], [type="tel"], [type="date"], [type="time"] {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--dm-text-tertiary) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-accent) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  outline: none !important;
+}
+
+/* Labels */
+label {
+  color: var(--dm-text-primary) !important;
+}
+
+/* Search Box */
+.search-box, .search-bar, .search-container {
+  background-color: var(--dm-bg-tertiary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.search-box input, .search-bar input {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.search-box input:focus, .search-bar input:focus {
+  border-color: var(--dm-accent) !important;
+  background-color: var(--dm-bg-secondary) !important;
+}
+
+.search-box i, .search-bar i {
+  color: var(--dm-text-secondary) !important;
+}
+
+/* Status Badges */
+.status-badge, .availability-badge, .period-badge {
+  background-color: var(--dm-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--dm-accent) !important;
+}
+
+.status-badge.completed, .status-badge.success {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+.status-badge.pending {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+}
+
+.status-badge.scheduled {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+.status-badge.cancelled {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* appointment type badge*/
+.appointment-type-badge, .appointment-type {
+  color: var(--dm-text-primary) !important;
+}
+
+.appointment-type.regular {
+  background-color: var(--dm-accent) !important;
+  color: #ffffff !important;
+}
+
+.appointment-type.urgent {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.appointment-type.follow {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+/*timeline*/
+.timeline-item, .activity-timeline {
+  border-color: var(--dm-border) !important;
+}
+
+.timeline-marker, .marker-dot {
+  background-color: var(--dm-accent) !important;
+  border-color: var(--dm-accent) !important;
+}
+
+.timeline-content, .timeline-details {
+  color: var(--dm-text-primary) !important;
+}
+
+/*stats */
+.stat-number {
+  color: var(--dm-text-primary) !important;
+}
+
+.stat-label {
+  color: var(--dm-text-secondary) !important;
+}
+
+.stat-icon {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-accent) !important;
+}
+
+/*profile elements*/
+.profile-info, .profile-avatar {
+  background-color: var(--dm-bg-secondary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.profile-avatar img {
+  border-color: var(--dm-border) !important;
+}
+
+.status-indicator.online {
+  background-color: #10b981 !important;
+}
+
+/*alert& messages*/
+.alert, [role="alert"], .notification, .message, .error {
+  background-color: var(--dm-bg-secondary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.error {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+/*form section*/
+.form-group, .form-section, .form-row {
+  color: var(--dm-text-primary) !important;
+}
+
+.form-section h4 {
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.modal, .modal-content {
+  background-color: var(--dm-bg-secondary) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.modal-header {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+.modal-header h3, .modal-header h2 {
+  color: var(--dm-text-primary) !important;
+}
+
+.close-btn {
+  color: var(--dm-text-secondary) !important;
+}
+
+.close-btn:hover {
+  color: var(--dm-text-primary) !important;
+  background-color: var(--dm-bg-tertiary) !important;
+}
+
+/*dividers*/
+hr, [role="separator"] {
+  border-color: var(--dm-border) !important;
+}
+
+/*links*/
+a {
+  color: var(--dm-accent) !important;
+}
+
+a:hover {
+  color: var(--dm-accent-light) !important;
+}
+
+a:visited {
+  color: #9333ea !important;
+}
+
+/*text highlight*/
+.highlight {
+  color: var(--dm-accent) !important;
+}
+
+/*focus */
+*:focus {
+  outline: 2px solid var(--dm-accent) !important;
+  outline-offset: 2px !important;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--dm-accent) !important;
+  outline-offset: 2px !important;
+}
+
+.nav-item:focus, .nav-link:focus, .filter-btn:focus, .filter-button:focus {
+  outline: 2px solid var(--dm-accent) !important;
+  outline-offset: 2px !important;
+}
+
+/*scrollbasr */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--dm-bg-secondary) !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--dm-border) !important;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dm-accent) !important;
+}
+
+/*buttons in various states */
+.filter-btn.active, .filter-button.active {
+  background-color: var(--dm-accent) !important;
+  border-color: var(--dm-accent) !important;
+  color: #ffffff !important;
+}
+
+/*icon colors */
+i, [class*="bi-"], [class*="icon"] {
+  color: inherit !important;
+}
+
+/* empty state */
+.empty-state {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+.empty-state i {
+  color: var(--dm-text-tertiary) !important;
+}
+
+/* appt card specific */
+.appointment-card-header {
+  background-color: var(--dm-bg-tertiary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.appointment-patient {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.appointment-patient-info h4 {
+  color: var(--dm-text-primary) !important;
+}
+
+.appointment-phone {
+  color: var(--dm-text-secondary) !important;
+}
+
+.appointment-details {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.appointment-detail {
+  color: var(--dm-text-secondary) !important;
+}
+
+.appointment-card-actions {
+  background-color: var(--dm-bg-tertiary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+/* action buttons */
+.appointment-action-btn.success {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.appointment-action-btn.danger {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.appointment-action-btn.secondary {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+/* tips and insights */
+.tips-header {
+  background-color: var(--dm-bg-tertiary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.tips-header h4 {
+  color: var(--dm-text-primary) !important;
+}
+
+.tip-item {
+  color: var(--dm-text-secondary) !important;
+}
+
+.tip-icon {
+  background-color: var(--dm-bg-tertiary) !important;
+}
+
+.tip-text strong {
+  color: var(--dm-text-primary) !important;
+}
+
+/*filters */
+.filter-controls {
+  background-color: var(--dm-bg-secondary) !important;
+}
+
+.filter-group label {
+  color: var(--dm-text-primary) !important;
+}
+
+.filter-button {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-secondary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.filter-button:hover {
+  background-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+/*results count badge */
+.results-count {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: var(--dm-accent) !important;
+}
+
+/* clear filters button */
+.clear-filters-btn {
+  background-color: var(--dm-bg-tertiary) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border) !important;
+}
+
+.clear-filters-btn:hover {
+  background-color: var(--dm-border) !important;
+}
+
+/*loading spinner */
+.loading-spinner {
+  border-color: var(--dm-border) !important;
+  border-top-color: var(--dm-accent) !important;
+}
+
+/* animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*gradient backgrounds */
+.patient-sidebar, .sidebar {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+.logo-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  color: #ffffff !important;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+}
+
+.quick-action-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+}
+
+/*section header styling */
+.section-header {
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+.section-title h3 {
+  color: var(--dm-text-primary) !important;
+}
+
+.section-title i {
+  color: var(--dm-accent) !important;
+}
+
+/*action cards*/
+.action-card:hover {
+  border-color: var(--dm-accent) !important;
+}
+
+.action-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  color: #ffffff !important;
+}
+
+.action-content h4 {
+  color: var(--dm-text-primary) !important;
+}
+
+.action-content p {
+  color: var(--dm-text-secondary) !important;
+}
+
+.action-count {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: var(--dm-accent) !important;
+}
+
+/* Doctor portal specific */
+.page-header p {
+  color: var(--dm-text-secondary) !important;
+}
+
+/*all text is readable */
+p, span {
+  color: var(--dm-text-primary) !important;
+}
+
+/*appt grid */
+.appointments-grid {
+  background-color: transparent !important;
+}
+
+/* priority indicator styling */
+.priority-indicator.regular {
+  background-color: #3b82f6 !important;
+}
+
+.priority-indicator.urgent {
+  background-color: #ef4444 !important;
+  animation: pulse-urgent 2s infinite;
+}
+
+.priority-indicator.follow {
+  background-color: #10b981 !important;
+}

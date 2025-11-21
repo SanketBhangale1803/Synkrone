@@ -1,0 +1,300 @@
+/*WCAG AAA Compliant */
+
+/*base*/
+body {
+    background-color: #000 !important;
+    color: #FFF !important;
+}
+
+/*focus state */
+*:focus {
+    outline: 3px solid #FFF !important;
+    outline-offset: 2px !important;
+}
+
+*:focus-visible {
+    outline: 3px solid #FFF !important;
+    outline-offset: 2px !important;
+}
+
+/*links& buttons */
+a, button, [role="button"] {
+    color: #0FF !important;
+    background-color: #000 !important;
+    border: 2px solid #FFF !important;
+    text-decoration: underline !important;
+}
+
+a:hover, button:hover, [role="button"]:hover {
+    background-color: #0FF !important;
+    color: #000 !important;
+}
+
+a:visited {
+    color: #FF00FF !important;
+}
+
+/* headers& sections */
+.header, header, .patient-header {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border-bottom: 2px solid #FFF !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #FFF !important;
+    border-bottom: none !important;
+}
+
+/*cards, panels*/
+.card, .panel, .sidebar, .footer,
+.stat-card, .action-card, .booking-section,
+.quick-actions-section, .activity-section,
+.section-header {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border: 2px solid #FFF !important;
+}
+
+/*sidebar */
+.patient-sidebar, aside {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border-right: 2px solid #FFF !important;
+}
+
+.sidebar-header, .nav-item, .nav-link, .profile-info {
+    background-color: #000 !important;
+    color: #FFF !important;
+}
+
+.nav-item.active {
+    background-color: #0FF !important;
+    color: #000 !important;
+    font-weight: bold !important;
+}
+
+.nav-item:hover {
+    background-color: #0FF !important;
+    color: #000 !important;
+}
+
+.nav-item:focus, .nav-link:focus {
+    outline: 3px solid #FFF !important;
+    outline-offset: 2px !important;
+}
+
+/* form elements*/
+input, textarea, select, [type="text"], [type="email"], 
+[type="password"], [type="tel"], [type="date"], [type="time"] {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border: 2px solid #FFF !important;
+    padding: 8px !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #AAA !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    background-color: #0FF !important;
+    color: #000 !important;
+    outline: 3px solid #FFF !important;
+}
+
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 20px !important;
+    padding-right: 32px !important;
+    appearance: none !important;
+}
+
+/*labels & Text */
+label {
+    color: #FFF !important;
+    font-weight: bold !important;
+}
+
+/*buttons with States */
+.btn, .btn-primary, .btn-secondary, .btn-small, .btn-success, .btn-danger,
+.quick-action-btn, .filter-btn, .filter-button, .action-card {
+    background-color: #000 !important;
+    color: #0FF !important;
+    border: 2px solid #FFF !important;
+    font-weight: bold !important;
+}
+
+.btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-small:hover, .btn-success:hover, .btn-danger:hover,
+.quick-action-btn:hover, .filter-btn:hover, .filter-button:hover, .action-card:hover {
+    background-color: #0FF !important;
+    color: #000 !important;
+}
+
+.filter-btn:focus, .filter-button:focus {
+    outline: 3px solid #FFF !important;
+    outline-offset: 2px !important;
+}
+
+.btn-primary, .btn-primary:hover {
+    background-color: #0FF !important;
+    color: #000 !important;
+    border: 2px solid #FFF !important;
+}
+
+.filter-btn.active {
+    background-color: #0FF !important;
+    color: #000 !important;
+    border: 2px solid #FFF !important;
+}
+
+/*status badges */
+.status-badge, .availability-badge, .period-badge,
+[class*="badge"], [class*="status"] {
+    background-color: #0FF !important;
+    color: #000 !important;
+    border: 1px solid #FFF !important;
+    font-weight: bold !important;
+}
+
+.status-badge.completed, .status-badge.success {
+    background-color: #00FF00 !important;
+    color: #000 !important;
+}
+
+.status-badge.scheduled {
+    background-color: #FFFF00 !important;
+    color: #000 !important;
+}
+
+.status-badge.reminder, .status-badge.info {
+    background-color: #0FF !important;
+    color: #000 !important;
+}
+
+/*timeline activity */
+.timeline-item, .activity-timeline {
+    border-left: 3px solid #FFF !important;
+}
+
+.timeline-marker, .marker-dot {
+    background-color: #0FF !important;
+    border: 2px solid #FFF !important;
+}
+
+.timeline-content, .timeline-details {
+    color: #FFF !important;
+}
+
+/*stats & numbers */
+.stat-number, .stat-label, .stat-icon {
+    color: #FFF !important;
+}
+
+.stat-icon {
+    background-color: #0FF !important;
+    color: #000 !important;
+}
+
+/*form container*/
+.form-group, .form-section, .form-row {
+    border: none !important;
+}
+
+.form-container {
+    background-color: #000 !important;
+    color: #FFF !important;
+}
+
+/*profile element*/
+.profile-avatar, .status-indicator {
+    border: 2px solid #FFF !important;
+}
+
+.status-indicator.online {
+    background-color: #00FF00 !important;
+}
+
+/*icon*/
+i[class*="bi-"], [class*="icon"] {
+    color: inherit !important;
+}
+
+/*alert messages */
+.alert, [role="alert"], .notification, .message {
+    background-color: #0FF !important;
+    color: #000 !important;
+    border: 2px solid #FFF !important;
+    font-weight: bold !important;
+}
+
+/*search bar*/
+.search-bar, .search-container {
+    background-color: #000 !important;
+    border: 2px solid #FFF !important;
+}
+
+.search-bar input {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border: none !important;
+}
+
+/*toolkits& dropdown*/
+[role="tooltip"], .tooltip, .dropdown-menu {
+    background-color: #0FF !important;
+    color: #000 !important;
+    border: 2px solid #FFF !important;
+}
+
+/* Disabled Elements */
+[disabled], .disabled, [aria-disabled="true"] {
+    opacity: 0.5 !important;
+    border-color: #666 !important;
+}
+
+/*text highlight*/
+.highlight {
+    background-color: #0FF !important;
+    color: #000 !important;
+    font-weight: bold !important;
+}
+
+/* Dividers & Borders */
+hr, [role="separator"] {
+    border-color: #FFF !important;
+}
+
+/*main content area*/
+main, .patient-main {
+    background-color: #000 !important;
+    color: #FFF !important;
+}
+
+/*container*/
+.container, .patient-portal {
+    background-color: #000 !important;
+    color: #FFF !important;
+}
+
+/*scrollbar */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #000 !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #FFF !important;
+    border: 1px solid #0FF !important;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #0FF !important;
+}

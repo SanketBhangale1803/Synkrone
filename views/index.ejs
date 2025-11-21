@@ -76,6 +76,14 @@
                   <input type="text" placeholder="Search appointments...">
                 </div>
               </div>
+              <button class="quick-action-btn" id="dark-mode-toggle-btn" title="Enable dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+                <i class="bi bi-moon"></i>
+                DARK
+              </button>  
+              <button class="quick-action-btn" id="high-contrast-toggle-btn" title="Enable high-contrast mode" aria-label="Toggle high-contrast mode" aria-pressed="false">
+                <i class="bi bi-eye"></i>
+                High Contrast
+              </button>
               <button class="quick-action-btn" onclick="scrollToBooking()">
                 <i class="bi bi-plus-circle"></i>
                 Quick Book
@@ -363,6 +371,12 @@
       </main>
     </div>
 
+    <!-- Load dark mode theme toggle -->
+    <script src="/javascripts/dark-mode.js"></script>
+    
+    <!-- Load high-contrast accessibility toggle -->
+    <script src="/javascripts/high-contrast.js"></script>
+    
     <!-- Load push notification system -->
     <script src="/javascripts/push.js"></script>
     <script>
