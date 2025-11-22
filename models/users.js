@@ -23,10 +23,25 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  phone: {
+    type: String,
+    trim: true,
+    sparse: true
+  },
   googleId: {
     type: String,
     sparse: true,
     unique: true
+  },
+  googleRefreshToken: {
+    type: String
+  },
+  googleAccessToken: {
+    type: String
+  },
+  calendarSyncEnabled: {
+    type: Boolean,
+    default: false
   },
   avatar: {
     type: String
@@ -53,6 +68,11 @@ const userSchema = new mongoose.Schema({
       p256dh: String,
       auth: String
     }
+  },
+  notificationPreferences: {
+    email: { type: Boolean, default: true },
+    sms: { type: Boolean, default: true },
+    webPush: { type: Boolean, default: true }
   }
 }, {
   timestamps: true

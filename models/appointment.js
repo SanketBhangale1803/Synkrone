@@ -75,6 +75,10 @@ const appointmentSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  calendarEventId: {
+    type: String,
+    sparse: true
+  },
   emailNotificationsEnabled: {
     type: Boolean,
     default: false

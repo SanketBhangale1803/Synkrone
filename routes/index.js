@@ -19,10 +19,21 @@ router.get('/login', (req, res) => {
 });
 
 router.post('/login', (req, res, next) => {
-  passport.authenticate('local', (err, user) => {
-    if (err || !user) return res.redirect('/login');
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      console.error('Login error:', err);
+      return res.redirect('/login');
+    }
+    if (!user) {
+      console.log('Login failed: No user found');
+      return res.redirect('/login');
+    }
     req.logIn(user, (err2) => {
-      if (err2) return res.redirect('/login');
+      if (err2) {
+        console.error('Session error:', err2);
+        return res.redirect('/login');
+      }
+      console.log(`✅ User logged in: ${user.username}, role: ${user.role}`);
       // Route by role
       if (user.role === 'doctor') return res.redirect('/doctor');
       if (user.role === 'admin') return res.redirect('/insights');
@@ -36,11 +47,11 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { username, fullname, email, password, confirmPassword, role, hospitalId, specialization } = req.body;
+  const { username, fullname, email, password, confirmPassword, role, hospitalId, specialization, emailNotifications, webPushNotifications } = req.body;
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.render('register', { error: 'Username already exists' });
+      return res.render('register', { error: 'Username already exists', formData: {username, fullname, email, role, hospitalId, specialization} });
     }
     if (password !== confirmPassword) {
       console.log('❌ Password mismatch – aborting');
@@ -49,7 +60,6 @@ router.post('/register', async (req, res) => {
     }
 
     pwRequirements = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
     if (!pwRequirements.test(password)) {
       return res.status(400).render('register', { error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.', 
                                       formData: {username, fullname, email, role, hospitalId, specialization} });
@@ -58,10 +68,10 @@ router.post('/register', async (req, res) => {
     // Validate required fields based on role
     if (role === 'doctor') {
       if (!specialization) {
-        return res.render('register', { error: 'Specialization is required for doctors' });
+        return res.render('register', { error: 'Specialization is required for doctors', formData: {username, fullname, email, role, hospitalId, specialization} });
       }
       if (!hospitalId) {
-        return res.render('register', { error: 'Hospital selection is required for doctors' });
+        return res.render('register', { error: 'Hospital selection is required for doctors', formData: {username, fullname, email, role, hospitalId, specialization} });
       }
     }
 
@@ -70,8 +80,12 @@ router.post('/register', async (req, res) => {
       user_id, 
       username, 
       fullname, 
-      email, 
-      role: role // Use the selected role directly, no fallback to 'user'
+      email,
+      role: role,
+      notificationPreferences: {
+        email: emailNotifications === 'on' || true, // Default to true
+        webPush: webPushNotifications === 'on' || true // Default to true
+      }
     };
 
     // Add doctor-specific fields if role is doctor
@@ -86,7 +100,7 @@ router.post('/register', async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     console.error('Registration error:', err);
-    res.render('register', { error: 'Error registering user' });
+    res.render('register', { error: 'Error registering user', formData: {username, fullname, email, role, hospitalId, specialization} });
   }
 });
 
@@ -120,7 +134,15 @@ router.get('/logout', (req, res, next) => {
 
 // Google OAuth routes
 router.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  passport.authenticate('google', { 
+    scope: [
+      'profile', 
+      'email',
+      'https://www.googleapis.com/auth/calendar.events'
+    ],
+    accessType: 'offline',
+    prompt: 'consent'
+  })
 );
 
 router.get('/auth/google/callback', 
@@ -203,6 +225,9 @@ router.post('/auth/google/complete', async (req, res) => {
       email: tempUser.email,
       googleId: tempUser.googleId,
       avatar: tempUser.avatar,
+      googleAccessToken: tempUser.googleAccessToken,
+      googleRefreshToken: tempUser.googleRefreshToken,
+      calendarSyncEnabled: !!tempUser.googleRefreshToken, // Enable if we have refresh token
       role: role,
       specialization: role === 'doctor' ? specialization : undefined,
       hospitalId: role === 'doctor' && hospitalId ? hospitalId : undefined
@@ -280,6 +305,16 @@ router.get('/confirmation', (req, res) => {
   const appointmentData = req.session?.lastAppointment;
   if (!appointmentData) return res.redirect('/dashboard');
   res.render('confirmation', { title: 'Appointment Confirmed', appointmentData });
+});
+
+router.get('/notification-diagnostics', (req, res) => {
+  if (!req.isAuthenticated()) return res.redirect('/login');
+  res.render('notification-diagnostics', { title: 'Notification Diagnostics', user: req.user });
+});
+
+router.get('/test-notifications', (req, res) => {
+  if (!req.isAuthenticated()) return res.redirect('/login');
+  res.render('test-notifications', { title: 'Test Notifications', user: req.user });
 });
 
 module.exports = router;
