@@ -434,7 +434,7 @@ body {
 /* Main Content Grid */
 .main-content-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns:1fr;
   gap: 32px;
   padding: 32px;
   padding-top: 0;
@@ -520,17 +520,24 @@ body {
 
 /* Appointment Form */
 .appointment-form {
-  padding: 32px 20px;
-  display: flex;
-  justify-content: center;
+  padding: 32px;
+  width: 100%;
 }
 
 .form-container {
-  max-width: 600px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
 }
 
-.form-section {
-  margin-bottom: 12px;
+.appointment-form .form-section {
+  margin: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  height: 100%;
 }
 
 .form-section h4 {
@@ -591,10 +598,11 @@ body {
 .form-actions {
   display: flex;
   gap: 16px;
-  justify-content: center;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #e2e8f0;
+  justify-content: flex-end;
+  margin-top: 0;
+  padding-top: 8px;
+  grid-column: 1 / -1;
+  border-top: none;
 }
 
 .btn-primary,
@@ -631,6 +639,20 @@ body {
 .btn-secondary:hover {
   background: #cbd5e0;
   transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .appointment-form {
+    padding: 24px 20px;
+  }
+
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    justify-content: center;
+  }
 }
 
 /* Quick Actions Section */
@@ -1518,6 +1540,98 @@ body {
   gap: 12px;
   justify-content: flex-end;
   background: #f7fafc;
+}
+
+/* Global Responsive Tweaks */
+@media (max-width: 1024px) {
+  .patient-portal,
+  .app-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .patient-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+  }
+
+  .patient-nav {
+    display: flex;
+    flex: 1;
+    padding: 0 12px;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .patient-nav .nav-item {
+    flex: 1;
+    justify-content: center;
+    padding: 12px;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .patient-profile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+
+  .patient-main,
+  .appointments-main {
+    height: auto;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .search-bar {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .main-content-grid {
+    padding: 20px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .welcome-section h1 {
+    font-size: 22px;
+  }
+
+  .booking-section {
+    border-radius: 16px;
+  }
+
+  .section-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 /* Responsive Design */
