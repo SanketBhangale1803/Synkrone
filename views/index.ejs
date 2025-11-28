@@ -107,7 +107,6 @@
             <div class="stat-content">
               <div class="stat-number"><%= stats ? stats.todayAppointments : 0 %></div>
               <div class="stat-label">Today's Appointments</div>
-              <div class="stat-change neutral">Next at 2:30 PM</div>
             </div>
           </div>
           
@@ -118,7 +117,6 @@
             <div class="stat-content">
               <div class="stat-number"><%= stats ? stats.totalAppointments : 0 %></div>
               <div class="stat-label">Total Appointments</div>
-              <div class="stat-change positive">+2 this month</div>
             </div>
           </div>
           
@@ -129,7 +127,6 @@
             <div class="stat-content">
               <div class="stat-number"><%= stats ? stats.urgentAppointments : 0 %></div>
               <div class="stat-label">Urgent Cases</div>
-              <div class="stat-change neutral">Immediate attention</div>
             </div>
           </div>
           
@@ -140,7 +137,6 @@
             <div class="stat-content">
               <div class="stat-number"><%= stats ? stats.regularAppointments : 0 %></div>
               <div class="stat-label">Regular Checkups</div>
-              <div class="stat-change positive">Stay healthy!</div>
             </div>
           </div>
         </div>
@@ -229,145 +225,8 @@
               </div>
             </form>
           </div>
-
-          <!-- Quick Actions & Info -->
-          <div class="quick-actions-section">
-            <div class="section-header">
-              <div class="section-title">
-                <i class="bi bi-lightning"></i>
-                <h3>Quick Actions</h3>
-              </div>
-            </div>
-            
-            <div class="action-cards">
-              <a href="/appointments" class="action-card primary">
-                <div class="action-icon">
-                  <i class="bi bi-calendar-event"></i>
-                </div>
-                <div class="action-content">
-                  <h4>My Appointments</h4>
-                  <p>View and manage your bookings</p>
-                  <span class="action-count"><%= stats ? stats.totalAppointments : 0 %> total</span>
-                </div>
-                <div class="action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </a>
-              
-              <a href="/doctor" class="action-card doctor">
-                <div class="action-icon">
-                  <i class="bi bi-heart-pulse"></i>
-                </div>
-                <div class="action-content">
-                  <h4>Doctor Portal</h4>
-                  <p>Access medical dashboard</p>
-                  <span class="action-count">Professional view</span>
-                </div>
-                <div class="action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </a>
-
-              <% /* Removed AI Insights for patient portal */ %>
-            </div>
-
-            <!-- Health Tips Section -->
-            <div class="health-tips">
-              <div class="tips-header">
-                <h4><i class="bi bi-lightbulb"></i> Health Tips</h4>
-                <button class="refresh-tips" onclick="refreshTips()">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
-              <div class="tips-content">
-                <div class="tip-item">
-                  <div class="tip-icon">💧</div>
-                  <div class="tip-text">
-                    <strong>Stay Hydrated</strong>
-                    <p>Drink at least 8 glasses of water daily</p>
-                  </div>
-                </div>
-                <div class="tip-item">
-                  <div class="tip-icon">🚶</div>
-                  <div class="tip-text">
-                    <strong>Daily Exercise</strong>
-                    <p>30 minutes of walking improves heart health</p>
-                  </div>
-                </div>
-                <div class="tip-item">
-                  <div class="tip-icon">😴</div>
-                  <div class="tip-text">
-                    <strong>Quality Sleep</strong>
-                    <p>7-9 hours of sleep boosts immunity</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Recent Activity Timeline -->
-        <div class="activity-section">
-          <div class="section-header">
-            <div class="section-title">
-              <i class="bi bi-clock-history"></i>
-              <h3>Recent Activity</h3>
-              <span class="period-badge">Last 7 days</span>
-            </div>
-          </div>
-          
-          <div class="activity-timeline">
-            <div class="timeline-item completed">
-              <div class="timeline-marker">
-                <div class="marker-dot"></div>
-                <div class="marker-line"></div>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-time">2 days ago</div>
-                <div class="timeline-details">
-                  <h5>Checkup Completed</h5>
-                  <p>Regular health examination with Dr. Smith</p>
-                </div>
-                <div class="timeline-status">
-                  <span class="status-badge completed">Completed</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="timeline-item scheduled">
-              <div class="timeline-marker">
-                <div class="marker-dot"></div>
-                <div class="marker-line"></div>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-time">5 days ago</div>
-                <div class="timeline-details">
-                  <h5>Appointment Scheduled</h5>
-                  <p>Follow-up appointment booked for next week</p>
-                </div>
-                <div class="timeline-status">
-                  <span class="status-badge scheduled">Scheduled</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="timeline-item reminder">
-              <div class="timeline-marker">
-                <div class="marker-dot"></div>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-time">1 week ago</div>
-                <div class="timeline-details">
-                  <h5>Reminder Sent</h5>
-                  <p>Annual checkup reminder notification</p>
-                </div>
-                <div class="timeline-status">
-                  <span class="status-badge reminder">Reminder</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
 
