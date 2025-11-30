@@ -5,7 +5,8 @@ const User = require('../models/users');
 const Hospital = require('../models/hospital');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
-const { sendConfirmationEmail, sendReminderEmail } = require('../services/emailService');
+const notificationService = require('../services/notificationService');
+const calendarService = require('../services/calendarService');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -106,6 +107,10 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       return res.redirect('/appointments');
     }
     
+    // Fetch doctor and hospital details for the notification
+    const doctor = await User.findById(doctorId);
+    const hospital = await Hospital.findById(hospitalId);
+    
     const newAppointment = new Appointment({
       userId: req.user._id,
       doctorId,
@@ -116,10 +121,60 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       time,
       type,
       notes: notes || '',
-      confirmationNumber: uuidv4().split('-')[0].toUpperCase() // Generate short confirmation number
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase()
     });
     
     const saved = await newAppointment.save();
+
+    // Send immediate email notification
+    const emailTitle = 'Appointment Confirmation';
+    const emailMessage = `
+      Your appointment has been confirmed!
+      
+      Details:
+      - Date: ${date}
+      - Time: ${time}
+      - Doctor: ${doctor ? doctor.fullname : 'Your doctor'}
+      - Hospital: ${hospital ? hospital.name : 'The hospital'}
+      - Type: ${type}
+      - Confirmation Number: ${saved.confirmationNumber}
+      
+      Please arrive 10 minutes before your scheduled time.
+      If you need to reschedule, please contact us at least 24 hours in advance.
+    `;
+
+    try {
+      await notificationService.sendNotification(
+        req.user,
+        emailTitle,
+        emailMessage,
+        { skipWebPush: true }  // Send email and SMS, but not push notification
+      );
+    } catch (notificationError) {
+      console.error('Error sending confirmation notification:', notificationError);
+      // Continue with the appointment creation even if notification fails
+    }
+
+    // Create Google Calendar event if calendar sync is enabled
+    try {
+      const calendarResult = await calendarService.createAppointmentEvent(
+        req.user,
+        saved,
+        doctor,
+        hospital
+      );
+      
+      if (calendarResult.success) {
+        // Save the calendar event ID to the appointment
+        saved.calendarEventId = calendarResult.eventId;
+        await saved.save();
+        console.log('✅ Calendar event created successfully');
+      }
+    } catch (calendarError) {
+      console.error('Error creating calendar event:', calendarError);
+      // Continue even if calendar creation fails
+    }
+
     // Save for confirmation page
     req.session.lastAppointment = saved;
     return req.session.save(() => res.redirect('/confirmation'));
@@ -188,9 +243,23 @@ router.put('/:id', auth.verifyToken, async function(req, res, next) {
       ownershipFilter,
       updateData,
       { new: true, runValidators: true }
-    );
+    ).populate('doctorId', 'username email').populate('hospitalId', 'name address');
     
     if (updatedAppointment) {
+      // Update calendar event if it exists
+      if (updatedAppointment.calendarEventId && updatedAppointment.userId) {
+        try {
+          const User = require('../models/users');
+          const user = await User.findById(updatedAppointment.userId);
+          if (user && user.googleRefreshToken) {
+            await calendarService.updateAppointmentEvent(user, updatedAppointment);
+          }
+        } catch (calendarError) {
+          console.error('Error updating calendar event:', calendarError);
+          // Continue with appointment update even if calendar update fails
+        }
+      }
+
       res.json({ 
         success: true, 
         message: 'Appointment updated successfully',
@@ -217,6 +286,20 @@ router.delete('/:id', auth.verifyToken, async function(req, res, next) {
     const deletedAppointment = await Appointment.findOneAndDelete(ownershipFilter);
     
     if (deletedAppointment) {
+      // Delete calendar event if it exists
+      if (deletedAppointment.calendarEventId && deletedAppointment.userId) {
+        try {
+          const User = require('../models/users');
+          const user = await User.findById(deletedAppointment.userId);
+          if (user && user.googleRefreshToken) {
+            await calendarService.deleteAppointmentEvent(user, deletedAppointment.calendarEventId);
+          }
+        } catch (calendarError) {
+          console.error('Error deleting calendar event:', calendarError);
+          // Continue with appointment deletion even if calendar deletion fails
+        }
+      }
+
       res.json({ 
         success: true, 
         message: 'Appointment deleted successfully'
@@ -248,151 +331,6 @@ router.get('/:id', auth.verifyToken, async function(req, res, next) {
   } catch (error) {
     console.error('Error fetching appointment:', error);
     res.status(500).json({ error: 'Error fetching appointment' });
-  }
-});
-
-/* POST enable email notifications for appointment */
-router.post('/enable-email-notifications', auth.verifyToken, async function(req, res, next) {
-  try {
-    const { appointmentId } = req.body;
-    
-    if (!appointmentId) {
-      return res.status(400).json({ error: 'Appointment ID is required' });
-    }
-    
-    // Find the appointment and verify ownership
-    const appointment = await Appointment.findOne({
-      _id: appointmentId,
-      userId: req.user._id
-    });
-    
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-    
-    if (appointment.emailNotificationsEnabled && appointment.confirmationEmailSent) {
-      return res.json({ 
-        success: true, 
-        message: 'Email notifications are already enabled for this appointment' 
-      });
-    }
-    
-    // Get doctor and hospital information
-    const doctor = await User.findById(appointment.doctorId);
-    const hospital = await Hospital.findById(appointment.hospitalId);
-    
-    if (!doctor || !hospital) {
-      return res.status(500).json({ error: 'Unable to retrieve appointment details' });
-    }
-    
-    // Send confirmation email
-    const emailResult = await sendConfirmationEmail(
-      req.user.email,
-      appointment,
-      doctor,
-      hospital
-    );
-    
-    if (emailResult.success) {
-      // Update appointment to mark email notifications as enabled
-      await Appointment.findByIdAndUpdate(appointmentId, {
-        emailNotificationsEnabled: true,
-        confirmationEmailSent: true
-      });
-      
-      res.json({ 
-        success: true, 
-        message: 'Email notifications enabled and confirmation sent!',
-        messageId: emailResult.messageId
-      });
-    } else {
-      res.status(500).json({ 
-        error: 'Failed to send confirmation email: ' + emailResult.error 
-      });
-    }
-  } catch (error) {
-    console.error('Error enabling email notifications:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/* POST test email notifications - FOR TESTING ONLY */
-router.post('/test-email/:type', auth.verifyToken, async function(req, res, next) {
-  try {
-    const { type } = req.params;
-    const { appointmentId } = req.body;
-    
-    if (!appointmentId) {
-      return res.status(400).json({ error: 'Appointment ID is required' });
-    }
-    
-    // Validate email type
-    const validTypes = ['confirmation', 'oneDayBefore', 'twelveHoursBefore', 'oneHourBefore'];
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({ error: 'Invalid email type' });
-    }
-    
-    // Find the appointment and verify ownership
-    const appointment = await Appointment.findOne({
-      _id: appointmentId,
-      userId: req.user._id
-    });
-    
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-    
-    // Get doctor and hospital information
-    const doctor = await User.findById(appointment.doctorId);
-    const hospital = await Hospital.findById(appointment.hospitalId);
-    
-    if (!doctor || !hospital) {
-      return res.status(500).json({ error: 'Unable to retrieve appointment details' });
-    }
-    
-    let emailResult;
-    let emailTypeLabel;
-    
-    if (type === 'confirmation') {
-      emailResult = await sendConfirmationEmail(
-        req.user.email,
-        appointment,
-        doctor,
-        hospital
-      );
-      emailTypeLabel = 'Confirmation Email';
-    } else {
-      emailResult = await sendReminderEmail(
-        req.user.email,
-        appointment,
-        doctor,
-        hospital,
-        type
-      );
-      
-      const typeLabels = {
-        oneDayBefore: '1-Day Reminder Email',
-        twelveHoursBefore: '12-Hour Reminder Email',
-        oneHourBefore: '1-Hour Reminder Email'
-      };
-      emailTypeLabel = typeLabels[type];
-    }
-    
-    if (emailResult.success) {
-      res.json({ 
-        success: true, 
-        message: `${emailTypeLabel} sent successfully!`,
-        messageId: emailResult.messageId,
-        sentTo: req.user.email
-      });
-    } else {
-      res.status(500).json({ 
-        error: `Failed to send ${emailTypeLabel.toLowerCase()}: ${emailResult.error}` 
-      });
-    }
-  } catch (error) {
-    console.error('Error sending test email:', error);
-    res.status(500).json({ error: 'Internal server error while sending test email' });
   }
 });
 
