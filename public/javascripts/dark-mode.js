@@ -17,25 +17,44 @@
    * Initialize dark mode on page load
    */
   function init() {
-    // Check if user has dark mode preference stored
-    const isEnabled = localStorage.getItem(CONFIG.storageKey) === 'true';
-    
+    // Safe access to localStorage (may throw in some private modes)
+    function safeGet(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Check if user has dark mode preference stored (null = not set)
+    const stored = safeGet(CONFIG.storageKey);
+
     // Check for system preference
-    const prefersDarkMode = window.matchMedia(CONFIG.mediaQuery).matches;
-    
-    // Enable if stored preference or system preference
-    if (isEnabled || prefersDarkMode) {
+    const mql = window.matchMedia(CONFIG.mediaQuery);
+    const prefersDarkMode = mql.matches;
+
+    // If user explicitly stored a preference, respect it; otherwise fall back to system
+    if (stored !== null) {
+      if (stored === 'true') enable(); else disable();
+    } else if (prefersDarkMode) {
       enable();
     }
-    
-    // Listen for system preference changes
-    window.matchMedia(CONFIG.mediaQuery).addEventListener('change', (e) => {
+
+    // Listen for system preference changes - use modern API with a fallback
+    const handleChange = (e) => {
       if (e.matches) {
-        enable();
+        // Only enable on system change if user hasn't set an explicit preference
+        if (safeGet(CONFIG.storageKey) === null) enable();
       } else {
-        disable();
+        if (safeGet(CONFIG.storageKey) === null) disable();
       }
-    });
+    };
+
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', handleChange);
+    } else if (typeof mql.addListener === 'function') {
+      mql.addListener(handleChange);
+    }
   }
 
   /**
@@ -54,8 +73,8 @@
     link.href = CONFIG.stylesheetPath;
     document.head.appendChild(link);
 
-    // Store preference
-    localStorage.setItem(CONFIG.storageKey, 'true');
+    // Store preference (safe)
+    try { localStorage.setItem(CONFIG.storageKey, 'true'); } catch (e) {}
 
     // Update button state if exists
     updateButtonState(true);
@@ -73,8 +92,8 @@
       stylesheet.remove();
     }
 
-    // Store preference
-    localStorage.setItem(CONFIG.storageKey, 'false');
+    // Store preference (safe)
+    try { localStorage.setItem(CONFIG.storageKey, 'false'); } catch (e) {}
 
     // Update button state if exists
     updateButtonState(false);
@@ -153,7 +172,9 @@
 
     // Keyboard accessibility - space and enter keys
     button.addEventListener('keydown', (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      // Support older and newer key identifiers
+      const key = e.key || e.code || '';
+      if (key === ' ' || key === 'Spacebar' || key === 'Enter' || key === 'Space') {
         e.preventDefault();
         toggle();
       }

@@ -10,23 +10,39 @@
 
   /* Initialize high-contrast mode on page load */
   function init() {
-    // Check if user has high-contrast preference stored
-    const isEnabled = localStorage.getItem(CONFIG.storageKey) === 'true';
-    
+    // Safe access to localStorage
+    function safeGet(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    // Check if user has high-contrast preference stored (null = not set)
+    const stored = safeGet(CONFIG.storageKey);
+
     // Check for system preference
-    const prefersDarkHighContrast = window.matchMedia('(prefers-contrast: more)').matches;
-    
-    // Enable if stored preference or system preference
-    if (isEnabled || prefersDarkHighContrast) {
+    const mql = window.matchMedia('(prefers-contrast: more)');
+    const prefersDarkHighContrast = mql.matches;
+
+    // If user explicitly stored a preference, respect it; otherwise fall back to system
+    if (stored !== null) {
+      if (stored === 'true') enable(); else disable();
+    } else if (prefersDarkHighContrast) {
       enable();
     }
-    
-    // Listen for system preference changes
-    window.matchMedia('(prefers-contrast: more)').addEventListener('change', (e) => {
+
+    // Listen for system preference changes with fallback
+    const handleChange = (e) => {
       if (e.matches) {
-        enable();
+        if (safeGet(CONFIG.storageKey) === null) enable();
+      } else {
+        if (safeGet(CONFIG.storageKey) === null) disable();
       }
-    });
+    };
+
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', handleChange);
+    } else if (typeof mql.addListener === 'function') {
+      mql.addListener(handleChange);
+    }
   }
 
   /*enable high contrast */
@@ -43,7 +59,7 @@
     link.href = CONFIG.stylesheetPath;
     document.head.appendChild(link);
 
-    localStorage.setItem(CONFIG.storageKey, 'true');
+    try { localStorage.setItem(CONFIG.storageKey, 'true'); } catch (e) {}
 
     updateButtonState(true);
 
@@ -56,7 +72,7 @@
       stylesheet.remove();
     }
 
-    localStorage.setItem(CONFIG.storageKey, 'false');
+    try { localStorage.setItem(CONFIG.storageKey, 'false'); } catch (e) {}
 
     //update button state if exists
     updateButtonState(false);
@@ -125,7 +141,8 @@
 
     //keyboard accessibility - space and enter keys
     button.addEventListener('keydown', (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      const key = e.key || e.code || '';
+      if (key === ' ' || key === 'Spacebar' || key === 'Enter' || key === 'Space') {
         e.preventDefault();
         toggle();
       }
