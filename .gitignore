@@ -5,6 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Binary/executable directories
+bin/
+
 # Environment variables (NEVER commit these!)
 .env
 .env.local

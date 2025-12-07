@@ -5,7 +5,8 @@ const User = require('../models/users');
 const Hospital = require('../models/hospital');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
-const notificationService = require('../services/notificationService');
+const calendarService = require('../services/calendarService');
+const { sendConfirmationEmail, sendReminderEmail } = require('../services/emailService');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -124,36 +125,6 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
     });
     
     const saved = await newAppointment.save();
-
-    // Send immediate email notification
-    const emailTitle = 'Appointment Confirmation';
-    const emailMessage = `
-      Your appointment has been confirmed!
-      
-      Details:
-      - Date: ${date}
-      - Time: ${time}
-      - Doctor: ${doctor ? doctor.fullname : 'Your doctor'}
-      - Hospital: ${hospital ? hospital.name : 'The hospital'}
-      - Type: ${type}
-      - Confirmation Number: ${saved.confirmationNumber}
-      
-      Please arrive 10 minutes before your scheduled time.
-      If you need to reschedule, please contact us at least 24 hours in advance.
-    `;
-
-    try {
-      await notificationService.sendNotification(
-        req.user,
-        emailTitle,
-        emailMessage,
-        { skipWebPush: true }  // Only send email, not push notification
-      );
-    } catch (notificationError) {
-      console.error('Error sending confirmation notification:', notificationError);
-      // Continue with the appointment creation even if notification fails
-    }
-
     // Save for confirmation page
     req.session.lastAppointment = saved;
     return req.session.save(() => res.redirect('/confirmation'));
@@ -222,9 +193,23 @@ router.put('/:id', auth.verifyToken, async function(req, res, next) {
       ownershipFilter,
       updateData,
       { new: true, runValidators: true }
-    );
+    ).populate('doctorId', 'username email').populate('hospitalId', 'name address');
     
     if (updatedAppointment) {
+      // Update calendar event if it exists
+      if (updatedAppointment.calendarEventId && updatedAppointment.userId) {
+        try {
+          const User = require('../models/users');
+          const user = await User.findById(updatedAppointment.userId);
+          if (user && user.googleRefreshToken) {
+            await calendarService.updateAppointmentEvent(user, updatedAppointment);
+          }
+        } catch (calendarError) {
+          console.error('Error updating calendar event:', calendarError);
+          // Continue with appointment update even if calendar update fails
+        }
+      }
+
       res.json({ 
         success: true, 
         message: 'Appointment updated successfully',
@@ -251,6 +236,20 @@ router.delete('/:id', auth.verifyToken, async function(req, res, next) {
     const deletedAppointment = await Appointment.findOneAndDelete(ownershipFilter);
     
     if (deletedAppointment) {
+      // Delete calendar event if it exists
+      if (deletedAppointment.calendarEventId && deletedAppointment.userId) {
+        try {
+          const User = require('../models/users');
+          const user = await User.findById(deletedAppointment.userId);
+          if (user && user.googleRefreshToken) {
+            await calendarService.deleteAppointmentEvent(user, deletedAppointment.calendarEventId);
+          }
+        } catch (calendarError) {
+          console.error('Error deleting calendar event:', calendarError);
+          // Continue with appointment deletion even if calendar deletion fails
+        }
+      }
+
       res.json({ 
         success: true, 
         message: 'Appointment deleted successfully'

@@ -8,7 +8,9 @@ const { v4: uuidv4 } = require('uuid');
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback",
+    accessType: 'offline',
+    prompt: 'consent'
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -16,6 +18,13 @@ passport.use(new GoogleStrategy({
       let user = await User.findOne({ googleId: profile.id });
       
       if (user) {
+        // Update tokens if they exist
+        if (accessToken) user.googleAccessToken = accessToken;
+        if (refreshToken) user.googleRefreshToken = refreshToken;
+        // Enable calendar sync if we have a refresh token
+        if (refreshToken) user.calendarSyncEnabled = true;
+        await user.save();
+        console.log(`✅ Updated Google tokens for user: ${user.username}, calendarSync: ${user.calendarSyncEnabled}`);
         return done(null, user);
       }
 
@@ -26,7 +35,12 @@ passport.use(new GoogleStrategy({
         // Link Google account to existing user
         user.googleId = profile.id;
         user.avatar = profile.photos[0]?.value;
+        if (accessToken) user.googleAccessToken = accessToken;
+        if (refreshToken) user.googleRefreshToken = refreshToken;
+        // Enable calendar sync if we have a refresh token
+        if (refreshToken) user.calendarSyncEnabled = true;
         await user.save();
+        console.log(`✅ Linked Google account for user: ${user.username}, calendarSync: ${user.calendarSyncEnabled}`);
         return done(null, user);
       }
       
@@ -36,7 +50,9 @@ passport.use(new GoogleStrategy({
         googleId: profile.id,
         fullname: profile.displayName,
         email: profile.emails[0].value,
-        avatar: profile.photos[0]?.value
+        avatar: profile.photos[0]?.value,
+        googleAccessToken: accessToken,
+        googleRefreshToken: refreshToken
       };
       
       return done(null, tempGoogleUser);

@@ -75,7 +75,19 @@ const appointmentSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
-  remindersSent: {
+  calendarEventId: {
+    type: String,
+    sparse: true
+  },
+  emailNotificationsEnabled: {
+    type: Boolean,
+    default: false
+  },
+  confirmationEmailSent: {
+    type: Boolean,
+    default: false
+  },
+  reminderEmailsSent: {
     type: Object,
     default: {
       oneDayBefore: false,
