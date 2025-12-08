@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 const nodemailer = require('nodemailer');
 
 class NotificationService {

@@ -1,4 +1,3 @@
-
 const express = require('express');
 const passport = require('passport');
 const User = require('../models/users');
@@ -109,6 +108,8 @@ router.get('/dashboard', async (req, res) => {
   if (!req.isAuthenticated()) return res.redirect('/login');
 
   const { Appointment } = require('../models');
+  const User = require('../models/users');
+  const Hospital = require('../models/hospital');
   const today = new Date().toISOString().split('T')[0];
 
   const query = { userId: req.user._id };
@@ -120,7 +121,38 @@ router.get('/dashboard', async (req, res) => {
     regularAppointments: all.filter(a => a.type === 'regular').length
   };
 
-  res.render('index', { title: 'Patient Dashboard', user: req.user, stats });
+  let editAppointment = null;
+  const editId = req.query.edit || req.query.view;
+  
+  if (editId) {
+    try {
+      editAppointment = await Appointment.findOne({ 
+        _id: editId, 
+        userId: req.user._id 
+      }).populate('doctorId').populate('hospitalId');
+      
+      if (!editAppointment) {
+        req.flash('error', 'Appointment not found or access denied');
+        return res.redirect('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error fetching appointment for edit:', error);
+      req.flash('error', 'Error loading appointment');
+      return res.redirect('/dashboard');
+    }
+  }
+
+  res.render('index', { 
+    title: 'Patient Dashboard', 
+    user: req.user, 
+    stats,
+    editAppointment,
+    viewMode: !!req.query.view,
+    flash: req.session.flash || null
+  });
+  
+  // Clear flash message after rendering
+  delete req.session.flash;
 });
 
 router.get('/logout', (req, res, next) => {

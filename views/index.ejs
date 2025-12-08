@@ -70,12 +70,6 @@
               <p>You have <span class="highlight"><%= stats ? stats.todayAppointments : 0 %> appointments today</span> and <span class="highlight"><%= stats ? stats.totalAppointments : 0 %> total bookings</span></p>
             </div>
             <div class="header-actions">
-              <div class="search-container">
-                <div class="search-bar">
-                  <i class="bi bi-search"></i>
-                  <input type="text" placeholder="Search appointments...">
-                </div>
-              </div>
               <button class="quick-action-btn" id="dark-mode-toggle-btn" title="Enable dark mode" aria-label="Toggle dark mode" aria-pressed="false">
                 <i class="bi bi-moon"></i>
                 DARK
@@ -88,12 +82,6 @@
                 <i class="bi bi-plus-circle"></i>
                 Quick Book
               </button>
-              <% if (user) { %>
-              <button class="quick-action-btn" id="send-test-push" style="background:#28a745;color:#fff;margin-left:8px;">
-                <i class="bi bi-bell"></i>
-                Send Test Push
-              </button>
-              <% } %>
             </div>
           </div>
         </header>
@@ -285,6 +273,274 @@
           doctorSelect.innerHTML = '<option value="">Failed to load doctors</option>';
         }
       });
+
+      // 🔥 NEW: Real-time time slot availability checking
+      let availabilityCache = new Map();
+
+      async function checkTimeSlotAvailability() {
+        const doctorId = document.getElementById('doctorId').value;
+        const selectedDate = document.getElementById('date').value;
+        const timeInput = document.getElementById('time');
+        
+        if (!doctorId || !selectedDate) {
+          clearTimeSlotIndicators();
+          return;
+        }
+
+        const cacheKey = `${doctorId}-${selectedDate}`;
+        
+        try {
+          let availabilityData;
+          
+          // Check cache first
+          if (availabilityCache.has(cacheKey)) {
+            availabilityData = availabilityCache.get(cacheKey);
+          } else {
+            // Fetch from API
+            const response = await fetch(`/appointments/available-slots/${doctorId}/${selectedDate}`);
+            availabilityData = await response.json();
+            
+            if (availabilityData.success) {
+              // Cache for 30 seconds
+              availabilityCache.set(cacheKey, availabilityData);
+              setTimeout(() => availabilityCache.delete(cacheKey), 30000);
+            }
+          }
+
+          if (availabilityData.success) {
+            updateTimeSlotDisplay(availabilityData);
+          }
+        } catch (error) {
+          console.error('Error checking availability:', error);
+          clearTimeSlotIndicators();
+        }
+      }
+
+      function updateTimeSlotDisplay(data) {
+        const { availableSlots, bookedSlots, userConflicts } = data;
+        
+        // Remove existing time slot indicators
+        clearTimeSlotIndicators();
+        
+        // Create time slot selector
+        createTimeSlotSelector(availableSlots, bookedSlots, userConflicts);
+        
+        // Update form validation
+        updateFormValidation(availableSlots, bookedSlots, userConflicts);
+      }
+
+      function createTimeSlotSelector(availableSlots, bookedSlots, userConflicts) {
+        const timeGroup = document.getElementById('time').closest('.form-group');
+        
+        // Remove existing slot selector if any
+        const existingSelector = timeGroup.querySelector('.time-slots-grid');
+        if (existingSelector) existingSelector.remove();
+        
+        // Create time slots grid
+        const slotsGrid = document.createElement('div');
+        slotsGrid.className = 'time-slots-grid';
+        slotsGrid.innerHTML = `
+          <div class="slots-header">
+            <span>Available Times:</span>
+            <div class="slots-legend">
+              <div class="legend-item"><span class="slot-indicator available"></span>Available</div>
+              <div class="legend-item"><span class="slot-indicator booked"></span>Booked</div>
+              <div class="legend-item"><span class="slot-indicator user-conflict"></span>You have appointment</div>
+            </div>
+          </div>
+          <div class="slots-container">
+            ${generateTimeSlots(availableSlots, bookedSlots, userConflicts)}
+          </div>
+        `;
+        
+        // Add CSS if not already added
+        if (!document.querySelector('#timeSlotStyles')) {
+          const styles = document.createElement('style');
+          styles.id = 'timeSlotStyles';
+          styles.textContent = `
+            .time-slots-grid {
+              margin-top: 10px;
+              border: 1px solid #e0e0e0;
+              border-radius: 6px;
+              padding: 12px;
+              background: #f9f9f9;
+            }
+            .slots-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 10px;
+              font-weight: 600;
+            }
+            .slots-legend {
+              display: flex;
+              gap: 15px;
+              font-size: 12px;
+            }
+            .legend-item {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+            }
+            .slot-indicator {
+              width: 12px;
+              height: 12px;
+              border-radius: 2px;
+              display: inline-block;
+            }
+            .slot-indicator.available { background: #28a745; }
+            .slot-indicator.booked { background: #dc3545; }
+            .slot-indicator.user-conflict { background: #ffc107; }
+            .slots-container {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+              gap: 8px;
+              max-height: 200px;
+              overflow-y: auto;
+            }
+            .time-slot {
+              padding: 8px 12px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+              text-align: center;
+              cursor: pointer;
+              font-size: 13px;
+              font-weight: 500;
+              transition: all 0.2s;
+            }
+            .time-slot.available {
+              background: #d4edda;
+              border-color: #28a745;
+              color: #155724;
+            }
+            .time-slot.available:hover {
+              background: #c3e6cb;
+              transform: translateY(-1px);
+            }
+            .time-slot.booked {
+              background: #f8d7da;
+              border-color: #dc3545;
+              color: #721c24;
+              cursor: not-allowed;
+              opacity: 0.7;
+            }
+            .time-slot.user-conflict {
+              background: #fff3cd;
+              border-color: #ffc107;
+              color: #856404;
+              cursor: not-allowed;
+            }
+            .time-slot.selected {
+              background: #007bff !important;
+              color: white !important;
+              border-color: #0056b3 !important;
+            }
+          `;
+          document.head.appendChild(styles);
+        }
+        
+        timeGroup.appendChild(slotsGrid);
+        
+        // Add click handlers for available slots
+        slotsGrid.querySelectorAll('.time-slot.available').forEach(slot => {
+          slot.addEventListener('click', function() {
+            // Remove previous selection
+            slotsGrid.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+            // Select this slot
+            this.classList.add('selected');
+            // Update the time input
+            document.getElementById('time').value = this.dataset.time;
+          });
+        });
+      }
+
+      function generateTimeSlots(availableSlots, bookedSlots, userConflicts) {
+        const allSlots = [
+          '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+          '15:00', '15:30', '16:00', '16:30', '17:00'
+        ];
+        
+        return allSlots.map(slot => {
+          let className = 'time-slot';
+          let status = '';
+          
+          if (userConflicts.includes(slot)) {
+            className += ' user-conflict';
+            status = 'You have an appointment';
+          } else if (bookedSlots.includes(slot)) {
+            className += ' booked';
+            status = 'Already booked';
+          } else if (availableSlots.includes(slot)) {
+            className += ' available';
+            status = 'Click to select';
+          } else {
+            className += ' booked';
+            status = 'Not available';
+          }
+          
+          const displayTime = formatTimeDisplay(slot);
+          
+          return `
+            <div class="${className}" data-time="${slot}" title="${status}">
+              ${displayTime}
+            </div>
+          `;
+        }).join('');
+      }
+
+      function formatTimeDisplay(time) {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        return `${displayHour}:${minutes} ${period}`;
+      }
+
+      function updateFormValidation(availableSlots, bookedSlots, userConflicts) {
+        const timeInput = document.getElementById('time');
+        const form = document.querySelector('.appointment-form');
+        
+        // Add form validation
+        const originalSubmitHandler = form.onsubmit;
+        form.onsubmit = function(e) {
+          const selectedTime = timeInput.value;
+          
+          if (!selectedTime) {
+            e.preventDefault();
+            alert('Please select an appointment time.');
+            return false;
+          }
+          
+          if (bookedSlots.includes(selectedTime)) {
+            e.preventDefault();
+            alert('This time slot is already booked. Please select an available time.');
+            return false;
+          }
+          
+          if (userConflicts.includes(selectedTime)) {
+            e.preventDefault();
+            alert('You already have an appointment at this time. Please select a different time.');
+            return false;
+          }
+          
+          // If we have an original handler, call it
+          if (originalSubmitHandler) {
+            return originalSubmitHandler.call(this, e);
+          }
+          
+          return true;
+        };
+      }
+
+      function clearTimeSlotIndicators() {
+        const existingGrid = document.querySelector('.time-slots-grid');
+        if (existingGrid) existingGrid.remove();
+      }
+
+      // Add event listeners for real-time checking
+      document.getElementById('doctorId').addEventListener('change', checkTimeSlotAvailability);
+      document.getElementById('date').addEventListener('change', checkTimeSlotAvailability);
 
       function scrollToBooking() {
         document.getElementById('bookingSection').scrollIntoView({ 

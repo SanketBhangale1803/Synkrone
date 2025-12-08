@@ -58,6 +58,14 @@
                         New
                     </a>
                 </div>
+                <button class="quick-action-btn" id="dark-mode-toggle-btn" title="Enable dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+                    <i class="bi bi-moon"></i>
+                    DARK
+                  </button>  
+                  <button class="quick-action-btn" id="high-contrast-toggle-btn" title="Enable high-contrast mode" aria-label="Toggle high-contrast mode" aria-pressed="false">
+                    <i class="bi bi-eye"></i>
+                    High Contrast
+                  </button>
             </header>
 
             <!-- Stats -->
@@ -160,29 +168,30 @@
 
                             <div class="card-actions">
                                 <% if (!appointment.status || appointment.status === 'pending') { %>
-                                    <button class="btn-small btn-primary" onclick="updateStatus('<%= appointment._id %>', 'in-progress')">
-                                        Start
-                                    </button>
                                     <button class="btn-small btn-secondary" onclick="editAppointment('<%= appointment._id %>')">
+                                        <i class="bi bi-pencil"></i>
                                         Edit
                                     </button>
-                                    <button class="btn-small btn-danger" onclick="updateStatus('<%= appointment._id %>', 'cancelled')">
+                                    <button class="btn-small btn-danger" onclick="cancelAppointment('<%= appointment._id %>')">
+                                        <i class="bi bi-x-circle"></i>
                                         Cancel
                                     </button>
                                 <% } else if (appointment.status === 'in-progress') { %>
-                                    <button class="btn-small btn-success" onclick="updateStatus('<%= appointment._id %>', 'completed')">
-                                        Complete
-                                    </button>
-                                    <button class="btn-small btn-secondary" onclick="editAppointment('<%= appointment._id %>')">
-                                        Edit
+                                    <button class="btn-small btn-secondary" onclick="viewAppointment('<%= appointment._id %>')">
+                                        <i class="bi bi-eye"></i>
+                                        View Details
                                     </button>
                                 <% } else { %>
-                                    <button class="btn-small btn-secondary" onclick="editAppointment('<%= appointment._id %>')">
+                                    <button class="btn-small btn-secondary" onclick="viewAppointment('<%= appointment._id %>')">
+                                        <i class="bi bi-eye"></i>
                                         View
                                     </button>
-                                    <button class="btn-small btn-danger" onclick="deleteAppointment('<%= appointment._id %>')">
-                                        Delete
-                                    </button>
+                                    <% if (appointment.status === 'cancelled' || appointment.status === 'completed') { %>
+                                        <button class="btn-small btn-danger" onclick="deleteAppointment('<%= appointment._id %>')">
+                                            <i class="bi bi-trash"></i>
+                                            Delete
+                                        </button>
+                                    <% } %>
                                 <% } %>
                             </div>
                         </div>
@@ -192,6 +201,8 @@
         </main>
     </div>
 
+    <script src="/javascripts/dark-mode.js"></script>
+    <script src="/javascripts/high-contrast.js"></script>
     <script>
     // Tabs + Search + Filter logic
     (function () {
@@ -320,15 +331,119 @@
     })();
     </script>
 
-    <!-- existing functions for updateStatus/delete/edit left unchanged -->
     <script>
-        function updateStatus(id, status) {
-            if (status === 'cancelled' && !confirm('Cancel this appointment?')) return;
-            if (status === 'completed' && !confirm('Mark as completed?')) return;
+        
+        // Helper function to get JWT token from localStorage or cookies
+        function getAuthToken() {
+            // Try localStorage first
+            const token = localStorage.getItem('token') || localStorage.getItem('jwt') || localStorage.getItem('authToken');
+            if (token) return token;
+            
+            // Try cookies as fallback
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'token' || name === 'jwt' || name === 'authToken') {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        function cancelAppointment(id) {
+            if (!confirm('Are you sure you want to cancel this appointment?')) return;
+            
+            const token = getAuthToken();
+            const headers = { 'Content-Type': 'application/json' };
+            
+            // Add Authorization header if token exists
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             
             fetch(`/appointments/${id}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
+                credentials: 'include', // Include cookies for session-based auth
+                body: JSON.stringify({ status: 'cancelled' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error cancelling appointment: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error cancelling appointment. Please try again.');
+            });
+        }
+
+        function deleteAppointment(id) {
+            if (!confirm('Permanently delete this appointment? This action cannot be undone.')) return;
+            
+            const token = getAuthToken();
+            const headers = {};
+            
+            // Add Authorization header if token exists
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            fetch(`/appointments/${id}`, {
+                method: 'DELETE',
+                headers: headers,
+                credentials: 'include' // Include cookies for session-based auth
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting appointment: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting appointment. Please try again.');
+            });
+        }
+
+        function editAppointment(id) {
+            // Redirect to dashboard with edit parameter
+            window.location.href = `/?edit=${id}`;
+        }
+
+        function viewAppointment(id) {
+            // For now, redirect to edit mode for viewing
+            // In the future, this could open a modal with appointment details
+            window.location.href = `/?view=${id}`;
+        }
+
+        // Legacy function kept for compatibility
+        function updateStatus(id, status) {
+            if (status === 'cancelled') {
+                cancelAppointment(id);
+                return;
+            }
+            
+            if (status === 'cancelled' && !confirm('Cancel this appointment?')) return;
+            if (status === 'completed' && !confirm('Mark as completed?')) return;
+            
+            const token = getAuthToken();
+            const headers = { 'Content-Type': 'application/json' };
+            
+            // Add Authorization header if token exists
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            fetch(`/appointments/${id}/status`, {
+                method: 'PUT',
+                headers: headers,
+                credentials: 'include', // Include cookies for session-based auth
                 body: JSON.stringify({ status })
             })
             .then(response => response.json())
@@ -336,32 +451,15 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Error updating appointment');
+                    alert('Error updating appointment: ' + (data.error || 'Unknown error'));
                 }
             })
-            .catch(() => alert('Error updating appointment'));
-        }
-
-        function deleteAppointment(id) {
-            if (!confirm('Permanently delete this appointment?')) return;
-            
-            fetch(`/appointments/${id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error deleting appointment');
-                }
-            })
-            .catch(() => alert('Error deleting appointment'));
-        }
-
-        function editAppointment(id) {
-            window.location.href = `/?edit=${id}`;
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating appointment. Please try again.');
+            });
         }
     </script>
 </body>
 </html>
+``` 

@@ -6,7 +6,7 @@ const Hospital = require('../models/hospital');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const calendarService = require('../services/calendarService');
-const { sendConfirmationEmail, sendReminderEmail } = require('../services/emailService');
+const notificationService = require('../services/notificationService');
 
 // Helper function to calculate appointment stats
 async function calculateAppointmentStats() {
@@ -95,15 +95,34 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       return res.redirect('/appointments');
     }
     
-    // Check for duplicate appointments
-    const existingAppointment = await Appointment.findOne({
-      name: name,
+    const conflictingAppointment = await Appointment.findOne({
+      doctorId: doctorId,
       date: date,
-      time: time
+      time: time,
+      status: { $nin: ['cancelled', 'rejected'] } // Exclude cancelled/rejected appointments
     });
     
-    if (existingAppointment) {
-      req.session.flash = { type: 'error', message: 'An appointment already exists for this time slot' };
+    if (conflictingAppointment) {
+      req.session.flash = { 
+        type: 'error', 
+        message: `This time slot is already booked. Please select a different time.` 
+      };
+      return res.redirect('/appointments');
+    }
+    
+    // 🔥 NEW: Additional validation - check if user already has an appointment at this time
+    const userConflict = await Appointment.findOne({
+      userId: req.user._id,
+      date: date,
+      time: time,
+      status: { $nin: ['cancelled', 'rejected'] }
+    });
+    
+    if (userConflict) {
+      req.session.flash = { 
+        type: 'error', 
+        message: `You already have an appointment at this time. Please select a different time.` 
+      };
       return res.redirect('/appointments');
     }
     
@@ -121,10 +140,63 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
       time,
       type,
       notes: notes || '',
-      confirmationNumber: uuidv4().split('-')[0].toUpperCase()
+      confirmationNumber: uuidv4().split('-')[0].toUpperCase(),
+      emailNotificationsEnabled: true // Enable email notifications by default
     });
     
     const saved = await newAppointment.save();
+    
+    // 🔥 NEW: Send email notification
+    try {
+      if (req.user.email) {
+        const emailTitle = `Appointment Confirmation - ${saved.confirmationNumber}`;
+        const emailMessage = `
+          <h2>Your Appointment is Confirmed!</h2>
+          <p><strong>Confirmation Number:</strong> ${saved.confirmationNumber}</p>
+          <p><strong>Date:</strong> ${saved.date}</p>
+          <p><strong>Time:</strong> ${saved.time}</p>
+          <p><strong>Doctor:</strong> Dr. ${doctor?.fullname || 'N/A'}</p>
+          <p><strong>Specialization:</strong> ${doctor?.specialization || 'N/A'}</p>
+          <p><strong>Hospital:</strong> ${hospital?.name || 'N/A'}</p>
+          <p><strong>Type:</strong> ${saved.type}</p>
+          ${saved.notes ? `<p><strong>Notes:</strong> ${saved.notes}</p>` : ''}
+          <br>
+          <p>Please arrive 10 minutes early for your appointment.</p>
+        `;
+        
+        const emailResult = await notificationService.sendEmail(req.user.email, emailTitle, emailMessage);
+        if (emailResult.success) {
+          console.log(`✅ Confirmation email sent to ${req.user.email}`);
+          saved.confirmationEmailSent = true;
+          await saved.save();
+        } else {
+          console.error('Failed to send confirmation email:', emailResult.error);
+        }
+      }
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Continue with appointment creation even if email fails
+    }
+
+    // 🔥 NEW: Create calendar event
+    try {
+      if (req.user.calendarSyncEnabled && req.user.googleRefreshToken) {
+        const calendarResult = await calendarService.createAppointmentEvent(req.user, saved, doctor, hospital);
+        if (calendarResult.success) {
+          console.log(`📅 Calendar event created: ${calendarResult.eventId}`);
+          saved.calendarEventId = calendarResult.eventId;
+          await saved.save();
+        } else {
+          console.error('Failed to create calendar event:', calendarResult.error);
+        }
+      } else {
+        console.log('Calendar sync not enabled for user or missing Google tokens');
+      }
+    } catch (calendarError) {
+      console.error('Calendar creation error:', calendarError);
+      // Continue with appointment creation even if calendar fails
+    }
+    
     // Save for confirmation page
     req.session.lastAppointment = saved;
     return req.session.save(() => res.redirect('/confirmation'));
@@ -136,32 +208,95 @@ router.post('/', auth.verifyToken, auth.requireRoles('user'), async function(req
 });
 
 /* PUT update appointment status */
-// Only doctors can update status
-router.put('/:id/status', auth.verifyToken, auth.requireRoles('doctor', 'admin'), async function(req, res, next) {
+// Patients can cancel their own appointments; doctors/admin can update any status
+router.put('/:id/status', auth.verifyToken, async function(req, res, next) {
   try {
     const { id } = req.params;
     const { status, doctorNotes } = req.body;
     
+    // First, find the appointment to check ownership
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    
+    // 🔥 FIXED: Improved ownership and role-based access control
+    if (req.user.role === 'user') {
+      // Patients can only cancel their own appointments
+      if (status !== 'cancelled') {
+        return res.status(403).json({ error: 'Patients can only cancel their appointments' });
+      }
+      
+      // Verify ownership for patients
+      if (appointment.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'You can only cancel your own appointments' });
+      }
+      
+      // Check if appointment can be cancelled
+      if (appointment.status === 'completed' || appointment.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot cancel completed or already cancelled appointments' });
+      }
+    } else if (req.user.role === 'doctor') {
+      // Doctors can update appointments assigned to them
+      if (appointment.doctorId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'You can only update appointments assigned to you' });
+      }
+    } else if (req.user.role !== 'admin') {
+      // Only users, doctors, and admins can update status
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
     const updateData = { status };
-    if (doctorNotes) updateData.doctorNotes = doctorNotes;
+    if (doctorNotes && ['doctor', 'admin'].includes(req.user.role)) {
+      updateData.doctorNotes = doctorNotes;
+    }
     
     // Add resolution timestamp for completed appointments
     if (status === 'completed') {
       updateData.resolvedAt = new Date();
     }
     
-    // Ownership/role check
-    const ownershipFilter = req.user.role === 'user' ? { _id: id, userId: req.user._id } :
-                            req.user.role === 'doctor' ? { _id: id, doctorId: req.user._id } :
-                            { _id: id };
-
-    const updatedAppointment = await Appointment.findOneAndUpdate(
-      ownershipFilter,
+    // Update the appointment
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      id,
       updateData,
       { new: true, runValidators: true }
     );
     
     if (updatedAppointment) {
+      // Delete calendar event if patient cancelled their appointment
+      if (status === 'cancelled' && req.user.role === 'user') {
+        try {
+          if (updatedAppointment.calendarEventId && req.user.googleRefreshToken) {
+            await calendarService.deleteAppointmentEvent(req.user, updatedAppointment.calendarEventId);
+            console.log(`📅 Calendar event deleted for cancelled appointment`);
+          }
+        } catch (calendarError) {
+          console.error('Error deleting calendar event:', calendarError);
+          // Continue with cancellation even if calendar deletion fails
+        }
+      }
+      
+      // Send cancellation email if patient cancelled
+      if (status === 'cancelled' && req.user.role === 'user' && req.user.email) {
+        try {
+          const emailTitle = `Appointment Cancelled - ${updatedAppointment.confirmationNumber}`;
+          const emailMessage = `
+            <h2>Your Appointment Has Been Cancelled</h2>
+            <p><strong>Confirmation Number:</strong> ${updatedAppointment.confirmationNumber}</p>
+            <p><strong>Date:</strong> ${updatedAppointment.date}</p>
+            <p><strong>Time:</strong> ${updatedAppointment.time}</p>
+            <p>Your appointment has been successfully cancelled. If you need to reschedule, please book a new appointment.</p>
+          `;
+          
+          await notificationService.sendEmail(req.user.email, emailTitle, emailMessage);
+          console.log(`✅ Cancellation email sent to ${req.user.email}`);
+        } catch (emailError) {
+          console.error('Error sending cancellation email:', emailError);
+          // Continue with cancellation even if email fails
+        }
+      }
+      
       res.json({ 
         success: true, 
         message: `Appointment ${status} successfully`,
@@ -281,6 +416,47 @@ router.get('/:id', auth.verifyToken, async function(req, res, next) {
   } catch (error) {
     console.error('Error fetching appointment:', error);
     res.status(500).json({ error: 'Error fetching appointment' });
+  }
+});
+
+/* GET available time slots for a specific doctor and date */
+router.get('/available-slots/:doctorId/:date', auth.verifyToken, async function(req, res, next) {
+  try {
+    const { doctorId, date } = req.params;
+    
+    const allTimeSlots = [
+      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+      '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+      '15:00', '15:30', '16:00', '16:30', '17:00'
+    ];
+    
+    const bookedAppointments = await Appointment.find({
+      doctorId: doctorId,
+      date: date,
+      status: { $nin: ['cancelled', 'rejected'] }
+    }).select('time');
+    
+    const bookedTimes = bookedAppointments.map(apt => apt.time);
+    
+    const availableSlots = allTimeSlots.filter(slot => !bookedTimes.includes(slot));
+    
+    const userAppointments = await Appointment.find({
+      userId: req.user._id,
+      date: date,
+      status: { $nin: ['cancelled', 'rejected'] }
+    }).select('time');
+    
+    const userBookedTimes = userAppointments.map(apt => apt.time);
+    
+    res.json({ 
+      success: true, 
+      availableSlots,
+      bookedSlots: bookedTimes,
+      userConflicts: userBookedTimes
+    });
+  } catch (error) {
+    console.error('Error fetching available slots:', error);
+    res.status(500).json({ error: 'Error fetching available time slots' });
   }
 });
 

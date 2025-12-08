@@ -138,6 +138,12 @@ label {
     outline-offset: 2px !important;
 }
 
+.appointment-form .form-section, .form-section {
+    background-color: #000 !important;
+    border: 2px solid #FFF !important;
+    color: #FFF !important;
+}
+
 .btn-primary, .btn-primary:hover {
     background-color: #0FF !important;
     color: #000 !important;

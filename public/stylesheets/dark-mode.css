@@ -63,6 +63,12 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--dm-text-primary) !important;
 }
 
+.appointment-form .form-section, .form-section, .section-title, .section-actions{
+  background-color: var(--dm-bg-secondary) !important;
+  border-color: var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
 /* Cards & Containers */
 .card, .panel, .stat-card, .appointment-card, 
 .booking-section, .quick-actions-section, .activity-section,
